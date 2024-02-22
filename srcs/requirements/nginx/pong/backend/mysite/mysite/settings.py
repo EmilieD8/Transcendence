@@ -37,8 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD:srcs/requirements/nginx/pong/backend/mysite/mysite/settings.py
     'mysite',
     'channels'
+=======
+    # 'database',
+    'database.apps.DatabaseConfig',
+    
+>>>>>>> 2d91989c31a36528ded04e52121c08589e99a513:srcs/requirements/nginx/pong/backend/transcendence_backend/settings.py
 ]
 
 MIDDLEWARE = [
