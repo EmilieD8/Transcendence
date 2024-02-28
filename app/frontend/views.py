@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+
 # from django.contrib.auth import get_user_model
 # from django.http import JsonResponse
 # from django.contrib.auth.models import User
@@ -62,6 +64,45 @@ def home(request):
 
 
 @csrf_exempt
+def update_game_result(request):
+    if request.method == 'POST':
+        # Assume winner is sent as a POST parameter
+        winner = request.POST.get('winner')
+        # Update the logged-in user's data based on the game result
+        if winner == 'player1':
+            # Increment the logged-in user's games won count
+            request.user.normal_games_won += 1
+            request.user.normal_win_streak += 1
+            request.user.normal_games_played == 3
+            request.user.save()
+            return JsonResponse({'message': 'Game result updated successfully'})
+        else:
+            request.user.normal_win_streak = 0
+            request.user.normal_games_played += 1
+            request.user.save()
+            return JsonResponse({'message': 'Game result updated successfully'})
+    else:
+        # Return error response for unsupported methods
+        return JsonResponse({'error': 'Unsupported method'}, status=405)
+
+
+@csrf_exempt
+def get_user_statistics(request):
+    if request.user.is_authenticated:
+        # Fetch the user's statistics from the database
+        user_statistics = {
+            'username': request.user.username,
+            'normal_games_played': request.user.normal_games_played,
+            'normal_games_won': request.user.normal_games_won,
+            'normal_win_streak': request.user.normal_win_streak,
+            'date_joined': request.user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
+        }
+        return JsonResponse(user_statistics)
+    else:
+        return JsonResponse({'error': 'User is not authenticated'}, status=401)
+
+
+@csrf_exempt
 def signOut(request):
     if request.user.is_authenticated:
         logout(request)
@@ -69,8 +110,13 @@ def signOut(request):
     else:
         return HttpResponse("<strong>invalid request</strong>")
 
-# User = get_user_model()
 
+@csrf_exempt
+def scoreboard(request):
+    return render(request=request, template_name="scoreboard.html", context={})
+
+
+# User = get_user_model()
 
 # def signup_view(request):
 #     if request.method == 'POST':

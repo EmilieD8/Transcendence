@@ -1,0 +1,61 @@
+{% extends "index.html" %}
+
+{% block content %}
+  {% if request.user.is_authenticated %}
+    <div class="container mt-4">
+      <h1 class="text-center">User Information</h1>
+      <div class="row">
+        <div class="col-md-6 offset-md-3">
+          <ul class="list-group">
+            <li class="list-group-item">Username: <span id="username"></span></li>
+            <li class="list-group-item">Games Played: {{ request.user.normal_games_played }}</li>
+            <li class="list-group-item">Games Won: <span id="games_won"></span></li>
+            <li class="list-group-item">Win Streak: <span id="win_streak"></span></li>
+            <li class="list-group-item">Date of Creation: <span id="date_of_creation"></span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="login-prompt">
+      <div class="text-center">
+        <h2>Welcome!</h2>
+        <p>Please sign in or sign up to continue.</p>
+        <div class="mt-4">
+          <a href="signIn" class="btn btn-primary mr-2">Sign In</a>
+          <a href="signUp" class="btn btn-success">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        fetchUserStatistics();
+    });
+
+    function fetchUserStatistics() {
+        fetch('/get_user_statistics/')
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Failed to fetch user statistics');
+            }
+        })
+        .then(data => {
+            // Update the UI elements with the fetched user statistics
+            document.getElementById('username').textContent = data.username;
+            document.getElementById('games_played').textContent = data.normal_games_played;
+            document.getElementById('games_won').textContent = data.normal_games_won;
+            document.getElementById('win_streak').textContent = data.normal_win_streak;
+            document.getElementById('date_of_creation').textContent = data.date_of_creation;
+        })
+        .catch(error => {
+            console.error('Error fetching user statistics:', error);
+        });
+    }
+  </script>
+{% endblock %}

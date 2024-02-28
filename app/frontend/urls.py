@@ -8,7 +8,8 @@ urlpatterns = [
     path('signUp', views.signUp, name='signUp'),
     path('signIn', views.signIn, name='signIn'),
     path('signOut', views.signOut, name='signOut'),
-
+    path('scoreboard', views.scoreboard, name='scoreboard'),
+    path('home', views.home, name='home'),
 ]
 # urlpatterns = [
 #     path('signup/', views.signup_view, name='signup'),  # Endpoint for sign-up form

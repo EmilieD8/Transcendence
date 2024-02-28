@@ -141,7 +141,7 @@ function scoreChoice() {
             if (debugPong === 3)
                 scoreToDo = 12;
             else
-                scoreToDo = 12;
+                scoreToDo = 1; // change for testing
             document.getElementById('choice').remove();
         });
         scoreEighteen.addEventListener("click", function() {

@@ -8,7 +8,7 @@
 	<link href="{% static "style.css" %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static "pong.css" %}">
     <link rel="stylesheet" href="{% static "memory.css" %}">
-    <script src="{% static "home.js" %}" defer></script>
+    <!-- <script src="{% static "home.js" %}" defer></script> -->
     <script src="{% static "gamePong.js" %}" defer></script>
     <script src="{% static "gameMenu.js" %}" defer></script>
     <script src="{% static "gameMemory.js" %}" defer></script>
@@ -31,7 +31,7 @@
     <nav>
         <ul>
 			{% if request.user.is_authenticated %}
-            <li><a href="#" onclick="showHome()">Home</a></li>
+            <li><a class="nav-link" href="home">Home</a></li>
             <li>
                 <div class="dropdown">
                 <button class="dropbtn">Games</button>
@@ -40,7 +40,7 @@
                     <a href="#" onclick="showGameMemory()">Memory</a>
                 </div>                
 			</div>  
-            <li><a href="#" onclick="showScoreboard()">Scoreboard</a></li>
+            <li><a class="nav-link" href="scoreboard">Scoreboard</a></li>
             <li><a href="#" onclick="showProfile()">Profile</a></li>
 			<li class="nav-item ">
 				<a class="nav-link" href="signOut">Sign Out</a>
@@ -115,11 +115,11 @@
             </div>
         </div>
     </div>
-    <script src="home.js" defer></script>
+    <!-- <script src="home.js" defer></script>
     {% comment %} <script>
         document.addEventListener('DOMContentLoaded', function() {
             showHome();
         });
-    </script> {% endcomment %}
+    </script> {% endcomment %} -->
 </body>
 </html>
