@@ -266,7 +266,8 @@ function resetGame(direction)
 }
 
 function endGame(winner) {
-    gameEnded = true;   
+    gameEnded = true;
+    console.log(winner + " won !");
     fetch('/update_game_result/', {
         method: 'POST',
         headers: {

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-
+import json
 
 
 @csrf_exempt
@@ -61,20 +61,22 @@ def home(request):
 
 @csrf_exempt
 def update_game_result(request):
+    print("UPDATING")
     if request.method == 'POST':
-        # Assume winner is sent as a POST parameter
-        winner = request.POST.get('winner')
+        # Parse JSON data from the request body
+        data = json.loads(request.body)
+        winner = data.get('winner')
         # Update the logged-in user's data based on the game result
-        if winner == 'player1':
+        if winner == request.user.username:
             # Increment the logged-in user's games won count
             request.user.normal_games_won += 1
             request.user.normal_win_streak += 1
-            request.user.normal_games_played == 3
+            request.user.normal_games_played += 1  # Increment games played
             request.user.save()
             return JsonResponse({'message': 'Game result updated successfully'})
         else:
             request.user.normal_win_streak = 0
-            request.user.normal_games_played += 1
+            request.user.normal_games_played += 1  # Increment games played
             request.user.save()
             return JsonResponse({'message': 'Game result updated successfully'})
     else:
@@ -135,10 +137,17 @@ def showProfile(request):
     if request.user.is_authenticated:
         # user = User.objects.get(username=request.user.username)
         user = User.objects.get(username=request.user)
-
         return render(request=request, template_name="profile.html", context={"user": user})
 
 
 @csrf_exempt
 def showHome(request):
     return render(request=request, template_name="home.html", context={})
+
+
+@csrf_exempt
+def scoreboard(request):
+    User = get_user_model()
+    if request.user.is_authenticated:
+        user = User.objects.get(username=request.user)
+        return render(request=request, template_name="scoreboard.html", context={"user": user})
