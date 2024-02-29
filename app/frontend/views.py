@@ -6,10 +6,6 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
-# from django.contrib.auth import get_user_model
-# from django.http import JsonResponse
-# from django.contrib.auth.models import User
-# from django.views.decorators.csrf import csrf_exempt
 
 
 @csrf_exempt
@@ -112,60 +108,37 @@ def signOut(request):
 
 
 @csrf_exempt
-def scoreboard(request):
-    return render(request=request, template_name="scoreboard.html", context={})
+def editProfile(request):
+    User = get_user_model()
+    if request.user.is_authenticated:
+        user = User.objects.get(username=request.user)
+        if request.method == 'POST':
+            if request.POST.get('name') != "":
+                user.name = request.POST.get('name')
+            if request.POST.get('surname') != "":
+                user.surname = request.POST.get('surname')
+            if request.POST.get('email') != "":
+                user.email = request.POST.get('email')
+            if request.POST.get('birthdate') != "":
+                user.birthdate = request.POST.get('birthdate')
+            user.save()
+            # return HttpResponse("Profile updated successfully")
+            return render(request=request, template_name="profile.html", context={"user": user})
+        return render(request=request, template_name="editProfile.html", context={"user": user})
+    else:
+        return HttpResponse("You are not logged in")
 
 
-# User = get_user_model()
+@csrf_exempt
+def showProfile(request):
+    User = get_user_model()
+    if request.user.is_authenticated:
+        # user = User.objects.get(username=request.user.username)
+        user = User.objects.get(username=request.user)
 
-# def signup_view(request):
-#     if request.method == 'POST':
-#         # Process the form data
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         email = request.POST.get('email')
-
-#         # Create a new user instance and save it to the database
-#         # new_user = User.objects.create_user(username=username, email=email, password=password)
-
-#         User.set_new_user(username, username, username, email, password)
-#         # Redirect to a success page or log in the user
-#         return redirect('success')  # Redirect to a success page
-
-#     # If not a POST request, render the sign-up form template
-#     return render(request, 'signup.html')
+        return render(request=request, template_name="profile.html", context={"user": user})
 
 
-# @csrf_exempt
-# def signup(request):
-#     if request.method == 'POST':
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         email = request.POST.get('email')
-
-#         # Validate the form data here
-
-#         user = User.objects.create_user(username, email, password)
-#         user.save()
-
-#         return JsonResponse({'message': 'User created successfully'}, status=201)
-
-#     return JsonResponse({'error': 'Invalid method'}, status=400)
-
-
-# def signup_endpoint(request):
-#     if request.method == 'POST':
-#         # Process the form data
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         email = request.POST.get('email')
-
-#         # Create a new user instance and save it to the database
-#         # new_user = User.objects.create_user(username=username, email=email, password=password)
-
-#         User.set_new_user(username, username, username, email, password)
-#         # Redirect to a success page or log in the user
-#         return redirect('success')  # Redirect to a success page
-
-#     # If not a POST request, render the sign-up form template
-#     return render(request, 'signup.html')
+@csrf_exempt
+def showHome(request):
+    return render(request=request, template_name="home.html", context={})

@@ -3,25 +3,16 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
-# class Score(models.Model):
-#     name = models.CharField(max_length=255)
-#     game = models.CharField(max_length=255)
-#     date = models.DateField()
-#     score = models.BooleanField()
-#     ranking = models.IntegerField()
-
-#     def __str__(self):
-#         return f"{self.name}'s score in {self.game} on {self.date}"
-
 
 # class User(models.Model):
 class User(AbstractUser):
     user_id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=50, unique=True)
     # intra_name = models.CharField(max_length=50, unique=True)
-    name = models.CharField(max_length=50)
-    surname = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, default='Name')
+    surname = models.CharField(max_length=50, default='Surname')
     email = models.EmailField(max_length=100, unique=True)
+    birthdate = models.DateField(default='2000-01-01')
     # password_hash = models.CharField(max_length=255)
     normal_games_played = models.IntegerField(default=0)
     normal_games_won = models.IntegerField(default=0)

@@ -10,6 +10,10 @@ urlpatterns = [
     path('signOut', views.signOut, name='signOut'),
     path('scoreboard', views.scoreboard, name='scoreboard'),
     path('home', views.home, name='home'),
+    path('showProfile', views.showProfile, name='ShowProfile'),
+    path('editProfile', views.editProfile, name='editProfile'),
+    path('showHome', views.showHome, name='ShowHome'),
+
 ]
 # urlpatterns = [
 #     path('signup/', views.signup_view, name='signup'),  # Endpoint for sign-up form
