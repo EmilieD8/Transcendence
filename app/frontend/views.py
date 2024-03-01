@@ -69,14 +69,14 @@ def update_game_result(request):
         # Update the logged-in user's data based on the game result
         if winner == request.user.username:
             # Increment the logged-in user's games won count
-            request.user.normal_games_won += 1
-            request.user.normal_win_streak += 1
-            request.user.normal_games_played += 1  # Increment games played
+            request.user.pong_games_won += 1
+            request.user.pong_win_streak += 1
+            request.user.pong_games_played += 1  # Increment games played
             request.user.save()
             return JsonResponse({'message': 'Game result updated successfully'})
         else:
-            request.user.normal_win_streak = 0
-            request.user.normal_games_played += 1  # Increment games played
+            request.user.pong_win_streak = 0
+            request.user.pong_games_played += 1  # Increment games played
             request.user.save()
             return JsonResponse({'message': 'Game result updated successfully'})
     else:
@@ -90,9 +90,9 @@ def get_user_statistics(request):
         # Fetch the user's statistics from the database
         user_statistics = {
             'username': request.user.username,
-            'normal_games_played': request.user.normal_games_played,
-            'normal_games_won': request.user.normal_games_won,
-            'normal_win_streak': request.user.normal_win_streak,
+            'pong_games_played': request.user.pong_games_played,
+            'pong_games_won': request.user.pong_games_won,
+            'pong_win_streak': request.user.pong_win_streak,
             'date_joined': request.user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
         }
         return JsonResponse(user_statistics)
@@ -121,8 +121,8 @@ def editProfile(request):
                 user.surname = request.POST.get('surname')
             if request.POST.get('email') != "":
                 user.email = request.POST.get('email')
-            if request.POST.get('birthdate') != "":
-                user.birthdate = request.POST.get('birthdate')
+            # if request.POST.get('birthdate') != "":
+            #     user.birthdate = request.POST.get('birthdate')
             user.save()
             # return HttpResponse("Profile updated successfully")
             return render(request=request, template_name="profile.html", context={"user": user})
