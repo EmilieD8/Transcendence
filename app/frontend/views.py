@@ -60,7 +60,7 @@ def home(request):
 
 
 @csrf_exempt
-def update_game_result(request):
+def update_game_result_pong(request):
     print("UPDATING")
     if request.method == 'POST':
         # Parse JSON data from the request body
@@ -77,6 +77,31 @@ def update_game_result(request):
         else:
             request.user.pong_win_streak = 0
             request.user.pong_games_played += 1  # Increment games played
+            request.user.save()
+            return JsonResponse({'message': 'Game result updated successfully'})
+    else:
+        # Return error response for unsupported methods
+        return JsonResponse({'error': 'Unsupported method'}, status=405)
+
+
+@csrf_exempt
+def update_game_result_memory(request):
+    print("UPDATING")
+    if request.method == 'POST':
+        # Parse JSON data from the request body
+        data = json.loads(request.body)
+        winner = data.get('winner')
+        # Update the logged-in user's data based on the game result
+        if winner == request.user.username:
+            # Increment the logged-in user's games won count
+            request.user.memory_games_won += 1
+            request.user.memory_win_streak += 1
+            request.user.memory_games_played += 1  # Increment games played
+            request.user.save()
+            return JsonResponse({'message': 'Game result updated successfully'})
+        else:
+            request.user.memory_win_streak = 0
+            request.user.memory_games_played += 1  # Increment games played
             request.user.save()
             return JsonResponse({'message': 'Game result updated successfully'})
     else:
@@ -151,3 +176,11 @@ def scoreboard(request):
     if request.user.is_authenticated:
         user = User.objects.get(username=request.user)
         return render(request=request, template_name="scoreboard.html", context={"user": user})
+
+
+@csrf_exempt
+def get_username(request):
+    if request.method == 'GET':
+        # Assuming the user is authenticated and you want to get the username of the authenticated user
+        username = request.user.username
+        return JsonResponse({'username': username})

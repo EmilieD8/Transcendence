@@ -268,7 +268,7 @@ function resetGame(direction)
 function endGame(winner) {
     gameEnded = true;
     console.log(winner + " won !");
-    fetch('/update_game_result/', {
+    fetch('/update_game_result_pong/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -305,5 +305,4 @@ function endGame(winner) {
         player2Score = 0;
         launchGamePong();
     });
-    
 }
