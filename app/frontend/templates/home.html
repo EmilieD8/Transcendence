@@ -3,41 +3,21 @@
 {% block content %}
 {% if request.user.is_authenticated %}
 
-{% comment %} <div class="container mt-4">
-    <h1 class="text-center">Welcome to Pong!</h1>
-	<h2 text-align="center"> You are logged in successfully.</h2>
-  </div> {% endcomment %}
-  <!-- Cards Section -->
-  {% comment %} <div class="section-cards">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Card 1</h5>
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Card 2</h5>
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Card 3</h5>
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+<div class="container mt-4">
+  <h1 class="text-center">Welcome to Pong!</h1>
+</div>
+<div class="container mt-4">
+  <h1 class="text-center">Ranking</h1>
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <ul class="list-group">
+        {% for user in top_three_users %}
+        <li class="list-group-item">{{ forloop.counter }}: {{ user.username }} Games won: {{ user.pong_games_won }}</li>
+        {% endfor %}
+      </ul>
     </div>
-  </div> {% endcomment %}
+  </div>
+</div>
   
 {% else %}
 <div class="login-prompt">

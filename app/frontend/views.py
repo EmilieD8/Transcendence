@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from database.models import User
 import json
 
 
@@ -52,11 +53,6 @@ def signIn(request):
             return HttpResponse("fail")
 
     return render(request=request, template_name="signIn.html", context={})
-
-
-@csrf_exempt
-def home(request):
-    return render(request=request, template_name="home.html", context={})
 
 
 @csrf_exempt
@@ -184,3 +180,11 @@ def get_username(request):
         # Assuming the user is authenticated and you want to get the username of the authenticated user
         username = request.user.username
         return JsonResponse({'username': username})
+
+
+@csrf_exempt
+def home(request):
+    # Retrieve the top three users based on games won
+    top_three_users = User.objects.order_by('-pong_games_won')[:3]
+    context = {'top_three_users': top_three_users}
+    return render(request, 'home.html', context)
