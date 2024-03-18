@@ -229,3 +229,18 @@ def home(request):
     context = {'top_three_users': top_three_users}
     add_users(request)
     return render(request, 'home.html', context)
+
+
+@csrf_exempt
+def gamePong(request):
+    # User = get_user_model()
+    # if request.user.is_authenticated:
+    #     # user = User.objects.get(username=request.user.username)
+    #     user = User.objects.get(username=request.user)
+    return render(request, 'gamePong.html', context={})
+    # return render(request=request, template_name="pong.html", context={})
+
+
+@csrf_exempt
+def gameMemory(request):
+    return render(request, 'gameMemory.html', context={})
