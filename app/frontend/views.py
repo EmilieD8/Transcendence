@@ -6,7 +6,9 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from database.models import User
+from faker import Faker
 import json
+import random
 
 
 @csrf_exempt
@@ -164,40 +166,27 @@ def showProfile(request):
 @csrf_exempt
 def add_users(request):
     User = get_user_model()
+    fake = Faker()
 
-    # List of user data
-    users_data = [
-        {
-            "username": "user123",
-            "email": "john.doe@example.com",
-            "name": "John",
-            "surname": "Doe",
-            "pong_games_played": 42,
-            "pong_games_won": 30,
-            "pong_win_streak": 8,
-            "pong_tournaments_won": 2,
-            "memory_games_played": 56,
-            "memory_games_won": 40,
-            "memory_win_streak": 5,
-            "memory_tournaments_won": 1,
-            "date_of_creation": "2023-12-05T10:23:45"
-        },
-        {
-            "username": "jane23",
-            "email": "jane.smith@example.com",
-            "name": "Jane",
-            "surname": "Smith",
-            "pong_games_played": 38,
-            "pong_games_won": 25,
-            "pong_win_streak": 6,
-            "pong_tournaments_won": 1,
-            "memory_games_played": 49,
-            "memory_games_won": 35,
-            "memory_win_streak": 4,
-            "memory_tournaments_won": 0,
-            "date_of_creation": "2023-11-21T16:54:32"
+    # Generate 50 users with random data
+    users_data = []
+    for _ in range(50):
+        user_data = {
+            "username": fake.user_name(),
+            "email": fake.email(),
+            "name": fake.first_name(),
+            "surname": fake.last_name(),
+            "pong_games_played": random.randint(0, 50),
+            "pong_games_won": random.randint(0, 50),
+            "pong_win_streak": random.randint(0, 20),
+            "pong_tournaments_won": random.randint(0, 5),
+            "memory_games_played": random.randint(0, 50),
+            "memory_games_won": random.randint(0, 50),
+            "memory_win_streak": random.randint(0, 20),
+            "memory_tournaments_won": random.randint(0, 5),
+            "date_of_creation": fake.date_time_this_decade().isoformat()
         }
-    ]
+        users_data.append(user_data)
 
     # Loop through the users data and add them to the database if they don't exist
     for user_data in users_data:
