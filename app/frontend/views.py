@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 from django.http import JsonResponse
 from database.models import User
 from faker import Faker
@@ -29,14 +30,16 @@ def signUp(request):
         username = request.POST.get('username', '')
         email = request.POST.get('email', '')
         password = request.POST.get('password1', '')
-        user = User.objects.create_user(username=username, email=email,
-                                        password=password)
-
-        # redirect the user to the home page
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            login(request, user)  # login the user so they do not have to re enter the same information again
-        return redirect("/")
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            # redirect the user to the home page
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)  # login the user so they do not have to re enter the same information again
+            return redirect("/")
+        except Exception:
+            messages.error(request, 'Failed to create user: User or Email already exists')
+            return render(request=request, template_name="signUp.html", context={})
 
     # if we receive a get request
     return render(request=request, template_name="signUp.html", context={})
@@ -52,8 +55,8 @@ def signIn(request):
             login(request, user)
             return redirect("/")
         else:
-            return HttpResponse("fail")
-
+            messages.error(request, 'Sign in failed. Please check your Intraname and password.')
+            return render(request=request, template_name="signIn.html", context={})
     return render(request=request, template_name="signIn.html", context={})
 
 
@@ -127,7 +130,9 @@ def get_user_statistics(request):
 def signOut(request):
     if request.user.is_authenticated:
         logout(request)
-        return HttpResponse("<strong>logout successful.<a href='signIn'> Go to Login page</a></strong>")
+        messages.error(request, 'Logout successful')
+        return render(request=request, template_name="signIn.html", context={})
+        # return HttpResponse("<strong>logout successful.<a href='signIn'> Go to Login page</a></strong>")
     else:
         return HttpResponse("<strong>invalid request</strong>")
 

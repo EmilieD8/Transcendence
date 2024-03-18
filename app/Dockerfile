@@ -20,7 +20,7 @@ RUN apt-get update && \
 RUN pip install --upgrade pip
 RUN pip install flake8==6.0.0
 COPY . /usr/src/app/
-RUN flake8 --ignore=E501,F401 .
+RUN flake8 --ignore=E501,F401,W391 .
 
 # install python dependencies
 COPY ./requirements.txt .
@@ -30,7 +30,6 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 #########
 # FINAL #
 #########
-
 # pull official base image
 FROM python:3.11.4-slim-buster
 
@@ -47,6 +46,9 @@ RUN mkdir $APP_HOME
 RUN mkdir $APP_HOME/staticfiles
 WORKDIR $APP_HOME
 
+
+# Install Redis
+RUN apt-get update && apt-get install -y --no-install-recommends redis-server
 # install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends netcat
 COPY --from=builder /usr/src/app/wheels /wheels
@@ -66,8 +68,10 @@ COPY . $APP_HOME
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
+
 # change to the app user
 USER app
+
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.sh"]

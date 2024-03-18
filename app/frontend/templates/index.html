@@ -1,10 +1,10 @@
 {% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pong - The ultimate tournament</title>
-    {% comment %} <link rel="stylesheet" href="style.css"> {% endcomment %}
 	<link href="{% static "style.css" %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static "pong.css" %}">
     <link rel="stylesheet" href="{% static "memory.css" %}">
@@ -30,20 +30,19 @@
     <nav>
         <ul>
 			{% if request.user.is_authenticated %}
-            <li><a class="nav-link" href="home">Home</a></li>
-            <li>
-                <div class="dropdown">
-                <button class="dropbtn">Games</button>
-                <div class="dropdown-content">
-					<a href="#" onclick="showGamePong()">Pong</a>
-                    <a href="#" onclick="showGameMemory()">Memory</a>
-                </div>                
-			</div>  
-            <li><a class="nav-link" href="scoreboard">Scoreboard</a></li>
-            {% comment %} <li><a href="#" onclick="showProfile()">Profile</a></li> {% endcomment %}
-			<li class="nav-item ">
-				<a class="nav-link" href="showProfile">Profile</a>
-			</li>
+            <li><a class="nav-link" href="showHome">Home</a></li>
+                    <li>
+                        <div class="dropdown">
+                        <button class="dropbtn">Games</button>
+                        <div class="dropdown-content">
+                            <a class="nav-link" href="gamePong">Pong</a>
+                            <a class="nav-link" href="gameMemory">Memory</a>
+                        </div>                
+                        </div>  
+                    <li><a href="#" onclick="showScoreboard()">Scoreboard</a></li>
+                    <li class="nav-item ">
+                        <a class="nav-link" href="showProfile">Profile</a>
+                    </li>
 			<li class="nav-item ">
 				<a class="nav-link" href="signOut">Sign Out</a>
 			</li>
@@ -118,12 +117,7 @@
             </div>
         </div>
     </div>
-    <!-- <script src="home.js" defer></script>
-    {% comment %} <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            showHome();
-        });
-    </script> {% endcomment %} -->
+    
 </body>
 <!-- JS, Popper.js, and jQuery -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

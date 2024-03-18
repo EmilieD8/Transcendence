@@ -1,10 +1,14 @@
 
 all:
 # builds and runs the containers
-	docker compose -f docker-compose.yml up --build -d
+	docker compose -f docker-compose.yml up --build -d 
 	docker compose -f docker-compose.yml exec web python manage.py collectstatic --no-input --clear
 	docker compose -f docker-compose.yml exec web python manage.py makemigrations
 	docker compose -f docker-compose.yml exec web python manage.py migrate --noinput
+
+#start the watchdog - wuff!
+watch:
+	docker compose watch --no-up
 
 clean:
 # stops and removes the containers
@@ -16,7 +20,7 @@ down:
 
 up:
 # starts the containers
-	docker compose -f docker-compose.yml up -d
+	docker compose -f docker-compose.yml up -d 
 	
 restart:
 # stops and starts the containers
@@ -62,5 +66,12 @@ connect_db:
 create_superuser:
 # creates a superuser
 	docker compose -f docker-compose.yml exec web python manage.py createsuperuser
+
+fclean_force:
+	@printf "Total clean of all configurations docker\n"
+	@docker stop $$(docker ps -qa)
+	@docker system prune --all --force --volumes
+	@docker network prune --force
+	@docker volume prune --force
 
 .PHONY: all, clean, fclean, re, ls, restart, logs, reload_static, down, up, migrate, connect_db, makemigrations, show_migrations, create_superuser
