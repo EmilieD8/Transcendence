@@ -162,7 +162,53 @@ def showProfile(request):
 
 
 @csrf_exempt
+def add_users(request):
+    User = get_user_model()
+
+    # List of user data
+    users_data = [
+        {
+            "username": "user123",
+            "email": "john.doe@example.com",
+            "name": "John",
+            "surname": "Doe",
+            "pong_games_played": 42,
+            "pong_games_won": 30,
+            "pong_win_streak": 8,
+            "pong_tournaments_won": 2,
+            "memory_games_played": 56,
+            "memory_games_won": 40,
+            "memory_win_streak": 5,
+            "memory_tournaments_won": 1,
+            "date_of_creation": "2023-12-05T10:23:45"
+        },
+        {
+            "username": "jane23",
+            "email": "jane.smith@example.com",
+            "name": "Jane",
+            "surname": "Smith",
+            "pong_games_played": 38,
+            "pong_games_won": 25,
+            "pong_win_streak": 6,
+            "pong_tournaments_won": 1,
+            "memory_games_played": 49,
+            "memory_games_won": 35,
+            "memory_win_streak": 4,
+            "memory_tournaments_won": 0,
+            "date_of_creation": "2023-11-21T16:54:32"
+        }
+    ]
+
+    # Loop through the users data and add them to the database if they don't exist
+    for user_data in users_data:
+        username = user_data['username']
+        if not User.objects.filter(username=username).exists():
+            User.objects.create_user(**user_data)
+
+
+@csrf_exempt
 def showHome(request):
+    # Call the function to add users
     return render(request=request, template_name="home.html", context={})
 
 
@@ -187,4 +233,5 @@ def home(request):
     # Retrieve the top three users based on games won
     top_three_users = User.objects.order_by('-pong_games_won')[:3]
     context = {'top_three_users': top_three_users}
+    add_users(request)
     return render(request, 'home.html', context)
