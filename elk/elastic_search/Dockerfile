@@ -2,9 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN echo "HELOOOOOO\n\n\n ELASTICSEARCH_USER: $ELASTICSEARCH_USER"
 
-#since Elasticsearch requires Java to run, let’s install it first.
 RUN apt-get update && \
 	apt-get install -y curl && \
 	apt-get install -y gnupg && \
@@ -15,16 +13,11 @@ RUN apt-get update && \
 	mkdir -p /usr/share/elasticsearch
 
 COPY elasticsearch.yml /etc/elasticsearch/
+COPY script_settings.sh /usr/share/elasticsearch
+RUN chmod 777 /usr/share/elasticsearch/script_settings.sh
 
 ENV PATH="/usr/share/elasticsearch/bin:${PATH}"
 
-RUN chown elasticsearch:elasticsearch -R /usr/share/elasticsearch && \
-	mkdir -p /var/data/elasticsearch && \
-	mkdir -p /var/log/elasticsearch && \
-	chown -R elasticsearch:elasticsearch -R /var/data/elasticsearch && \
-	chown -R elasticsearch:elasticsearch -R /var/log/elasticsearch
-USER elasticsearch
-
 EXPOSE 9200
 
-CMD ["elasticsearch"]
+CMD ["/usr/share/elasticsearch/script_settings.sh"]
