@@ -362,6 +362,16 @@ async function tournamentLaunch()
                             i++;
                     }
                 }
+                if (data.action === 'display_tournament_turn')
+                {
+                    console.log("display tournament turn");
+                    namePlayerTournament = data.namePlayerTournament;
+                    var mainElementT = document.getElementById('content');
+                    mainElementT.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">' +
+                        namePlayer[0] + ' will play against ' + namePlayer[1] + '</p>' +
+                        namePlayer[2] + ' will play against ' + namePlayer[3] + '</p>';
+                        '</p>';
+                }
 
             }
         }
@@ -414,6 +424,16 @@ async function tournamentClient()
         };
         roomSocket.onmessage = function(event) {
             const data = JSON.parse(event.data);
+            if (data.action === 'display_tournament_turn')
+            {
+                console.log("display tournament turn");
+                namePlayerTournament = data.namePlayerTournament;
+                var mainElementT = document.getElementById('content');
+                mainElementT.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">' +
+                    namePlayer[0] + ' will play against ' + namePlayer[1] + '</p>' +
+                    namePlayer[2] + ' will play against ' + namePlayer[3] + '</p>';
+                    '</p>';
+            }
             if (data.action === 'countdown_pong')
                 updateCountdownDisplay(data.message);
         }
