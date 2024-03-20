@@ -10,9 +10,9 @@ class GameRoomManagerPong:
     rooms = {}  # Stores room_name: host_name
 
     @classmethod
-    def create_room_pong(cls, host_name):
+    def create_room_pong(cls, host_name, room_settings):
         room_id = f"{host_name}_Game"
-        cls.rooms[room_id] = {"host": host_name, "guest": None}
+        cls.rooms[room_id] = {"host": host_name, "guest": None, "num_players": 2, "room_settings": room_settings}
         return room_id
 
     @classmethod
@@ -22,6 +22,17 @@ class GameRoomManagerPong:
     @classmethod
     def join_room_pong(cls, room_id, guest_name):
         if room_id in cls.rooms and cls.rooms[room_id]["guest"] is None:
+            cls.rooms[room_id]["guest"] = guest_name
+            return True
+        return False
+
+    @classmethod
+    def join_room_pong_tournament(cls, room_id, guest_name):
+        if room_id in cls.rooms and cls.rooms[room_id]["guest"] is None and cls.rooms[room_id]["num_players"] < cls.rooms[room_id]["room_settings"]:
+            cls.rooms[room_id]["num_players"] += 1
+            return True
+        elif room_id in cls.rooms and cls.rooms[room_id]["num_players"] == cls.rooms[room_id]["room_settings"]:
+            cls.rooms[room_id]["num_players"] += 1
             cls.rooms[room_id]["guest"] = guest_name
             return True
         return False
@@ -39,7 +50,6 @@ class GameRoomManagerMemory:
 
     @classmethod
     def list_rooms_memory(cls):
-        # return [cls.rooms[room_id] for room_id, details in cls.rooms.items() if details["guest"] is None]
         return [(room_id, details['room_settings']) for room_id, details in cls.rooms.items() if details["guest"] is None]
 
     @classmethod
@@ -83,7 +93,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if action == 'create_room_pong':
             host_name = data.get('host_name')
-            room_id = GameRoomManagerPong.create_room_pong(host_name)
+            room_settings = data.get('room_settings')
+            room_id = GameRoomManagerPong.create_room_pong(host_name, room_settings)
             await self.send(text_data=json.dumps({'action': 'room_created_pong', 'room_id': room_id}))
 
         elif action == 'create_room_memory':
@@ -114,6 +125,23 @@ class GameConsumer(AsyncWebsocketConsumer):
                     }
                 )
                 await self.send(text_data=json.dumps({'action': 'joined_room_pong', 'room_id': room_id}))
+            else:
+                await self.send(text_data=json.dumps({'action': 'error', 'message': 'Room not found or full'}))
+
+        elif action == 'join_room_pong_tournament':
+            room_id = data.get('room_id')
+            guest_name = data.get('guest_name')
+            joined = GameRoomManagerPong.join_room_pong_tournament(room_id, guest_name)
+            if joined:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'player_joined_pong',
+                        'room_id': room_id,
+                        'guest_name': guest_name,
+                    }
+                )
+                await self.send(text_data=json.dumps({'action': 'joined_room_pong_tournament', 'room_id': room_id}))
             else:
                 await self.send(text_data=json.dumps({'action': 'error', 'message': 'Room not found or full'}))
 
@@ -251,6 +279,22 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'score2': data['score2']
                 }
             )
+
+        elif action == 'display_tournament_turn':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'display_tournament_turn',
+                    'namePlayerTournament': data['namePlayerTournament']
+                }
+            )
+            self.send(text_data=json.dumps({'action': 'display_tournament_turn', 'room_id': room_id}))
+
+    async def display_tournament_turn(self, event):
+        await self.send(text_data=json.dumps({
+            'action': 'display_tournament_turn',
+            'namePlayerTournament': event['namePlayerTournament']
+        }))
 
     async def game_ended_memory(self, event):
         await self.send(text_data=json.dumps({

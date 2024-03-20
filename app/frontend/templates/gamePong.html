@@ -258,21 +258,36 @@ async function showGamePong() {
 		//remote Game
         await TwoOrTournament();
         if (tournament === true)
-            await numPlayers();
-		if (await decideHost())
-		{
-            await scoreChoice();
-            namePlayer[0] = "{{  user.username  }}";
-			//host
-			remoteHost();
-		}
-
-		else
-		{
-			//client
-            namePlayer[1] = "{{  user.username  }}";
-			remoteClient();
-		}
+        {
+            if (await decideHost())
+            {
+                await numPlayers();
+                namePlayer[0] = "{{  user.username  }}";
+                await scoreChoice();
+                await tournamentLaunch();
+            }
+            else
+            {
+                await tournamentClient();
+            }
+        }
+        else
+        {
+            if (await decideHost())
+            {
+                await scoreChoice();
+                namePlayer[0] = "{{  user.username  }}";
+                //host
+                remoteHost();
+            }
+    
+            else
+            {
+                //client
+                namePlayer[1] = "{{  user.username  }}";
+                remoteClient();
+            }
+        }
 	}
 	else
 	{
@@ -282,6 +297,8 @@ async function showGamePong() {
         {
             await numPlayers();
             await getNamePlayer();
+            namePlayer[0] = "{{  user.username  }}";
+
         }
 		namePlayer[0] = "{{  user.username  }}";
 		// namePlayer[1] = "Guest Player";
@@ -301,17 +318,118 @@ async function showGamePong() {
 let isHost = false; 
 // hostsocket
 let gameRoomSocket = null;
+let gameRoomSocketT = null;
+let namePlayerTournament = [];
+let i = 1;
+
+async function tournamentLaunch()
+{
+    var mainElementT = document.getElementById('content');
+	mainElementT.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
+	let hostNameT = "{{ user.username }}";
+    namePlayerTournament[0] = hostNameT;
+    let sanitizedRoomNameT = encodeURIComponent(`${hostNameT}_Game`).replace(/'/g, ""); // Sanitize and remove special characters
+    let socketT = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
+    console.log("numPlayers: ", numberPlayers);
+    socketT.onopen = function(event) {
+        socketT.send(JSON.stringify({ action: 'create_room_pong', host_name: hostNameT, room_settings: numberPlayers }));
+    };
+    socketT.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.action === 'room_created_pong') {
+            console.log('Room created:', data.room_id);
+            socketT.close();
+            gameRoomSocketT = new WebSocket(`wss://${window.location.host}/wss/socket-server/${sanitizedRoomNameT}/`);
+            isHost = true;
+            gameRoomSocketT.onopen = function() {
+                console.log("Game room connection established for host.");
+            };
+            gameRoomSocketT.onmessage = function(event) {
+                // Handle messages from the server, such as a player joining the room
+                const data = JSON.parse(event.data);
+                if (data.action === 'player_joined_pong') {
+                    console.log(`TOURNAMENT: ${data.guest_name} has joined the game.`);
+                    if (data.guest_name)
+                    {
+                        namePlayerTournament[i] = data.guest_name;
+                        console.log(i + " namePlayerTournament is : ", namePlayerTournament[i]);
+                        if (i === numberPlayers)
+                        {
+                            console.log("send info tournament");
+                            gameRoomSocketT.send(JSON.stringify({ action: 'display_tournament_turn', namePlayerTournament: namePlayerTournament }));
+                        }
+                        else
+                            i++;
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+async function tournamentClient()
+{
+    let socketC = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
+
+    socketC.onopen = function(event) {
+        // Request the list of active game rooms once the WebSocket connection is open
+        socketC.send(JSON.stringify({ action: 'list_rooms_pong' }));
+    };
+
+    socketC.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.action === 'list_rooms_pong') {
+            const games = data.rooms; // Array of active game rooms
+            var gameList = document.getElementById('content');
+            gameList.innerHTML = ''; // Clear previous content
+
+            if (games.length > 0) {
+                // Dynamically create buttons for each active game
+                games.forEach((game) => {
+                    var button = document.createElement('button');
+                    button.textContent = game;
+                    button.classList.add("styled-button"); 
+                    button.addEventListener("click", function() {
+                        joinGameRoomTournamentClient(game); 
+                    });
+                    gameList.appendChild(button);
+                });
+            } else
+                gameList.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">No active games</p>';
+        } else if (data.action === 'joined_room_pong_tournament')
+            console.log('Joined room:', data.room_id);
+        
+    };
+
+    function joinGameRoomTournamentClient(roomId) {
+        socketC.close(); // Close the WebSocket connection to the lobby
+        // Open a new WebSocket connection for the selected room
+        roomSocket = new WebSocket(`wss://${window.location.host}/wss/socket-server/${roomId}/`);
+        roomSocket.onopen = function() {
+            // Notify the server that the client has joined the room
+            console.log("Game room connection established for client.");
+            roomSocket.send(JSON.stringify({ action: 'join_room_pong_tournament', room_id: roomId , guest_name: "{{ user.username }}"}));
+            namePlayer[0] =  roomId.replace('_Game', '');
+        };
+        roomSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.action === 'countdown_pong')
+                updateCountdownDisplay(data.message);
+        }
+    }
+}
+
 
 async function remoteHost() {
 	var mainElement = document.getElementById('content');
-	// mainElement.innerHTML +=  '<p style="text-align: center;  font-size:2em;>Waiting for Players...</p>';
 	mainElement.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
 	let hostName = "{{ user.username }}"; 
     let sanitizedRoomName = encodeURIComponent(`${hostName}_Game`).replace(/'/g, ""); // Sanitize and remove special characters
     let socket = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`); 
 
     socket.onopen = function(event) {
-        socket.send(JSON.stringify({ action: 'create_room_pong', host_name: hostName, room_name: sanitizedRoomName }));
+        socket.send(JSON.stringify({ action: 'create_room_pong', host_name: hostName, room_settings: numPlayers }));
     };
     
     socket.onmessage = function(event) {
