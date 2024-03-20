@@ -1,0 +1,9 @@
+cluster.name: first-try
+node.name: first-node
+
+path:
+  data: /var/data/elasticsearch
+  logs: /var/log/elasticsearch
+
+#network.host: 0.0.0.0
+http.host: 0.0.0.0

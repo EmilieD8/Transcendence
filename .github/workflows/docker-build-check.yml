@@ -2,13 +2,6 @@ name: Docker Build Test
 
 on:
   push:
-    branches:
-      - mariia
-      - main
-  pull_request:
-    branches:
-      - mariia
-      - main
 
 #job on building container and testing whether we can reach end points
 jobs:
@@ -41,32 +34,12 @@ jobs:
           docker ps -a
           exit $(docker ps -aq -f status=exited | wc -l)
       
-      - name: Test Localhost:9999 Reachability
+      - name: Elastic search Reachability
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://localhost:9999)
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://localhost:9200)
           if [ $response -eq 60 ]; then
-            echo "Localhost:9999 is reachable and require certificate"
+            echo "elasticsearch is reachable and require certificate"
           else
-            echo "Localhost:9999 is not reachable"
-            exit 1
-          fi
-
-      - name: Test Localhost:9090 Reachability
-        run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -L http://localhost:9090)
-          if [ $response -eq 200 ]; then
-            echo "Localhost:9090 is reachable"
-          else
-            echo "Localhost:9090 is not reachable"
-            exit 1
-          fi
-
-      - name: Test Localhost:3000 Reachability
-        run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -L http://localhost:3000)
-          if [ $response -eq 200 ]; then
-            echo "Localhost:3000 is reachable"
-          else
-            echo "Localhost:3000 is not reachable"
+            echo "elasticsearch not reachable"
             exit 1
           fi

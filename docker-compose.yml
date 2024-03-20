@@ -140,43 +140,20 @@ version: '3.8'
 
 services:
   elastic_search:
-    image: elasticsearch:8.12.2
-    container_name: elastic_search
+    build:
+      context: ./elk/elastic_search
+      dockerfile: Dockerfile
+    container_name: elasticsearch
+    env_file:
+      - .env
     ports:
       - 9200:9200
-      - 9300:9300
-    volumes: 
-      - elastic_data:/usr/share/elasticsearch/data
-    networks:
-      - localhost
-
-  logstash:
-    image: logstash:8.12.2
-    container_name: logstash
-    ports:
-      - 9600:9600
-    volumes: 
-      - ./logstash/:/logstash_dir
-    command: logstash -f /logstash_dir/logstash.conf
-    depends_on:
-      - elastic_search
-    networks:
-      - localhost
-
-  kibana:
-    image: kibana:8.12.2
-    container_name: kibana
-    ports:
-      - 5601:5601
-    environment:
-      - ELASTICSEARCH_URL=http://elastic_search:9200
-    depends_on:
-      - elastic_search
     networks:
       - localhost
 
 
-volumes:
+
+# volumes:
   # postgres_data:
   # static_volume:
   # prometheus-data:
@@ -194,7 +171,6 @@ volumes:
   #   #   o: bind
   #   #   type: none
   #   #   device: /home/${USER}/tasks/my_github/transcendence/alertmanager #change to local env
-  elastic_data:
 
 networks:
     localhost:
