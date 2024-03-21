@@ -155,6 +155,20 @@ services:
     networks:
       - localhost
 
+  kibana:
+    build:
+      context: ./elk/kibana
+      dockerfile: Dockerfile
+    container_name: kibana
+    env_file:
+      - .env
+    ports:
+      - 5601:5601
+    depends_on:
+      - elastic_search
+    networks:
+      - localhost
+
 
 
 # volumes:
