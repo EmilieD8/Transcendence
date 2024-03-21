@@ -241,6 +241,22 @@ function startButton() {
     });
 }
 
+
+function startButtonTournament() {
+    var main = document.getElementById('content');
+    main.innerHTML += '<div id="choice"><p style="text-align: center; padding-top:5em;"> Ready to start ? <br> <br> Let\'s go !</p></div>';
+    var startButton = document.createElement("button");
+    startButton.textContent = "Start !";
+    startButton.classList.add("styled-button");
+    document.getElementById('choice').appendChild(startButton);
+    return new Promise (function (resolve) {
+        startButton.addEventListener("click", function() {
+            startGame = true;
+            document.getElementById('choice').remove();
+            resolve(true);
+        });
+    });
+}
 async function showGamePong() {
     var mainElement = document.getElementById('content');
 	mainElement.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">Pong</p>';
@@ -321,7 +337,8 @@ let gameRoomSocket = null;
 let gameRoomSocketT = null;
 let namePlayerTournament = [];
 let i = 1;
-
+let mainHostLaunched = false;
+let otherRoomClosed = false;
 async function tournamentLaunch()
 {
     var mainElementT = document.getElementById('content');
@@ -347,32 +364,52 @@ async function tournamentLaunch()
             gameRoomSocketT.onmessage = function(event) {
                 // Handle messages from the server, such as a player joining the room
                 const data = JSON.parse(event.data);
-                if (data.action === 'player_joined_pong') {
+                if (data.action === 'player_joined_pong_tournament') {
                     console.log(`TOURNAMENT: ${data.guest_name} has joined the game.`);
                     if (data.guest_name)
                     {
                         namePlayerTournament[i] = data.guest_name;
                         console.log(i + " namePlayerTournament is : ", namePlayerTournament[i]);
-                        if (i === numberPlayers)
+                        if (i === numberPlayers - 1)
                         {
                             console.log("send info tournament");
-                            gameRoomSocketT.send(JSON.stringify({ action: 'display_tournament_turn', namePlayerTournament: namePlayerTournament }));
+                            gameRoomSocketT.send(JSON.stringify({ action: 'display_tournament_turn', namePlayerTournament: namePlayerTournament, score: scoreToDo}));
                         }
                         else
                             i++;
                     }
                 }
-                if (data.action === 'display_tournament_turn')
-                {
-                    console.log("display tournament turn");
+                if (data.action === 'display_tournament_turn') {
+                    console.log("Displaying tournament turn");
                     namePlayerTournament = data.namePlayerTournament;
                     var mainElementT = document.getElementById('content');
                     mainElementT.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">' +
-                        namePlayer[0] + ' will play against ' + namePlayer[1] + '</p>' +
-                        namePlayer[2] + ' will play against ' + namePlayer[3] + '</p>';
-                        '</p>';
+                        namePlayerTournament[0] + ' will play against ' + namePlayerTournament[1] + '</p>' +
+                        '<p>' + namePlayerTournament[2] + ' will play against ' + namePlayerTournament[3] + '</p>';
+                    var main = document.getElementById('content');
+                    main.innerHTML += '<div id="choice"><p style="text-align: center; padding-top:5em;"> Ready to start ? <br> <br> Let\'s go !</p></div>';
+                    var startTournament = document.createElement("button");
+                    startTournament.textContent = "Start !";
+                    startTournament.classList.add("styled-button");
+                    document.getElementById('choice').appendChild(startTournament);
+                    startTournament.addEventListener("click", async function() {
+                        //startGame = true;
+                        document.getElementById('choice').remove();
+                        gameRoomSocketT.send(JSON.stringify({action: 'launching_room', nameAgainst: namePlayerTournament[determinedHostOrClient(namePlayerTournament) + 1]}));
+                        // gameRoomSocketT.close();
+                        remoteHost();
+                        mainHostLaunched = true;
+                        if (otherRoomClosed === true)
+                            gameRoomSocketT.close();
+                    });
                 }
-
+                if (data.action === 'all_room_launched')
+                {
+                    console.log("all room launched");
+                    otherRoomClosed = true;
+                    if (mainHostLaunched === true)
+                        gameRoomSocketT.close();
+                }
             }
         }
     }
@@ -424,22 +461,73 @@ async function tournamentClient()
         };
         roomSocket.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            if (data.action === 'display_tournament_turn')
-            {
-                console.log("display tournament turn");
-                namePlayerTournament = data.namePlayerTournament;
+            if (data.action === 'display_tournament_turn') {
+                console.log("Displaying tournament turn");
+                namePlayerTournament = data.namePlayerTournament;           
+                scoreToDo = data.score;             
                 var mainElementT = document.getElementById('content');
                 mainElementT.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">' +
-                    namePlayer[0] + ' will play against ' + namePlayer[1] + '</p>' +
-                    namePlayer[2] + ' will play against ' + namePlayer[3] + '</p>';
-                    '</p>';
+                    namePlayerTournament[0] + ' will play against ' + namePlayerTournament[1] + '</p>' +
+                    '<p>' + namePlayerTournament[2] + ' will play against ' + namePlayerTournament[3] + '</p>';
+                if (determinedHostOrClient(namePlayerTournament) % 2 === 0)
+                {
+                    var main = document.getElementById('content');
+                    main.innerHTML += '<div id="choice"><p style="text-align: center; padding-top:5em;"> Ready to start ? <br> <br> Let\'s go !</p></div>';
+                    var startTournament = document.createElement("button");
+                    startTournament.textContent = "Start !";
+                    startTournament.classList.add("styled-button");
+                    document.getElementById('choice').appendChild(startTournament);
+                    startTournament.addEventListener("click", async function() {
+                        //startGame = true;
+                        document.getElementById('choice').remove();
+                        console.log("is host");
+                        roomSocket.send(JSON.stringify({action: 'launching_room', nameAgainst: namePlayerTournament[determinedHostOrClient(namePlayerTournament) + 1]}));
+                        // roomSocket.close(); maybe to close it at the very end ?
+                        roomSocket.send(JSON.stringify({action: 'all_room_launched'}));
+                        // roomSocket.close();
+                        remoteHost();
+                });
+                }
             }
-            if (data.action === 'countdown_pong')
-                updateCountdownDisplay(data.message);
+            if (data.action === 'launching_room') {
+                console.log("launching room");
+                nameAgainst = data.nameAgainst;
+                console.log("nameAgainst: ", nameAgainst);
+                if (nameAgainst === "{{ user.username }}")
+                {
+                    console.log("launching room inside");
+                    var mainElementT = document.getElementById('content');
+                    mainElementT.innerHTML += '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">' +
+                        'Your room is ready </p>';
+                    mainElementT.innerHTML += '<div id="choice"><p style="text-align: center; padding-top:5em;"> Ready to start ? <br> <br> Let\'s go !</p></div>';
+                    var startTournamentClient = document.createElement("button");
+                    startTournamentClient.textContent = "Start !";
+                    startTournamentClient.classList.add("styled-button");
+                    document.getElementById('choice').appendChild(startTournamentClient);
+                    startTournamentClient.addEventListener("click", async function() {
+                        //startGame = true;
+                        document.getElementById('choice').remove();
+                        remoteClient();
+                    });
+                    }
+                }
+            // if (data.action === 'all_room_launched')
+            // {
+            //     console.log("all room launched");
+            //     roomSocket.close();
+            // }
+
         }
     }
 }
 
+function determinedHostOrClient(namePlayerTournament) {
+    for (var j = 0; j < namePlayerTournament.length; j++) {
+        if (namePlayerTournament[j] === "{{ user.username }}")
+            return j;
+    }
+    return -1;
+}
 
 async function remoteHost() {
 	var mainElement = document.getElementById('content');
