@@ -197,6 +197,23 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'winner': data['winner']
                 }
             )
+        elif action == 'game_ended_pong_tournament':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game_ended_pong_tournament',
+                    'winner': data['winner']
+                }
+            )
+
+        elif action == 'game_ended_pong':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game_ended_pong',
+                    'winner': data['winner']
+                }
+            )
 
         elif action == 'game_ended_memory':
             await self.channel_layer.group_send(
@@ -386,6 +403,12 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_ended_pong(self, event):
         await self.send(text_data=json.dumps({
             'action': 'game_ended_pong',
+            'winner': event['winner']
+        }))
+
+    async def game_ended_pong_tournament(self, event):
+        await self.send(text_data=json.dumps({
+            'action': 'game_ended_pong_tournament',
             'winner': event['winner']
         }))
 
