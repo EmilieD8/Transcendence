@@ -562,6 +562,8 @@ function determinedHostOrClient(namePlayerTournament) {
 }
 
 async function remoteHost() {
+    // if (gameRoomSocket !== null && gameRoomSocket.readyState === WebSocket.OPEN)
+    //     gameRoomSocket.close();
 	var mainElement = document.getElementById('content');
 	mainElement.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
 	let hostName = "{{ user.username }}"; 
@@ -616,7 +618,12 @@ async function remoteHost() {
                     }
 				}
 				if (data.type === 'player_left') {
+                    gameRoomSocket.close();
 					console.log('Player left the game');
+				}
+                if (data.type === 'player_left_self') {
+                    gameRoomSocket.close();
+					console.log('Player left the game SELF');
 				}
             }
             gameRoomSocket.onclose = function() {
@@ -633,6 +640,8 @@ async function remoteHost() {
 let roomSocket = null;
 
 async function remoteClient() {
+    if (roomSocket !== null && roomSocket.readyState === WebSocket.OPEN)
+        roomSocket.close();
     let socket = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
 
     socket.onopen = function(event) {
@@ -704,31 +713,31 @@ async function remoteClient() {
             }
             if (data.action === 'game_ended_pong_tournament') {
                 endGameTournament(data.winner);
-                if (tournamentRound === 1 && data.winner === "{{user.username}}")
-                {
-                    console.log("game ended first round and launch second round as host");
-                    tournamentRound++;
-                    if (tournamentRound === 2)
-                    {
-                        roomSocket.send(JSON.stringify({action: 'change_tournament_round', round: tournamentRound}));
-                        tournamentLaunch();
-                    }
-                    else
-                    {
-                        //display stuff to say that they won the tournament
-                    }
-                }
-                else if (tournamentRound === 2 && data.winner === "{{user.username}}")
-                {
-                    console.log("game ended first round and launch second round as guest");
-                    tournamentClient();
-                    roomSocket.close();
-                }
-                else
-                {
-                    console.log("player lost the tournament");
-                    // show HTML to say sorry loser
-                }
+                // if (tournamentRound === 1 && data.winner === "{{user.username}}")
+                // {
+                //     console.log("game ended first round and launch second round as host");
+                //     tournamentRound++;
+                //     if (tournamentRound === 2)
+                //     {
+                //         roomSocket.send(JSON.stringify({action: 'change_tournament_round', round: tournamentRound}));
+                //         tournamentLaunch();
+                //     }
+                //     else
+                //     {
+                //         //display stuff to say that they won the tournament
+                //     }
+                // }
+                // else if (tournamentRound === 2 && data.winner === "{{user.username}}")
+                // {
+                //     console.log("game ended first round and launch second round as guest");
+                //     tournamentClient();
+                //     // roomSocket.close();
+                // }
+                // else
+                // {
+                //     console.log("player lost the tournament");
+                //     // show HTML to say sorry loser
+                // }
             }
             if (data.action === 'update_player_position') {
                 if (data.player === 'player1') {
@@ -748,7 +757,12 @@ async function remoteClient() {
                 namePlayer[0] = data.name;
             }
 			if (data.type === 'player_left') {
+                roomSocket.close();
 				console.log('Player left the game');
+			}
+            if (data.type === 'player_left_self') {
+                roomSocket.close();
+				console.log('Player left the game SELF');
 			}
         };
     }
@@ -1240,6 +1254,10 @@ function endGameTournament(winner) {
         {
             tournamentRound++;
             console.log("MAIN HOST LAUNCHED IS : ", mainHostLaunched);
+            // if (isHost)
+            //     gameRoomSocket.close();
+            // else
+            //     roomSocket.close();
             if (tournamentRound === 2 && mainHostLaunched === false)
             {
                 numPlayers /= 2;
@@ -1248,7 +1266,6 @@ function endGameTournament(winner) {
                     gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
                 else
                     roomSocketC.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
-                // gameRoomSocket.close();
                 // tournamentLaunch();
                 remoteHost();
             }
@@ -1274,8 +1291,11 @@ function endGameTournament(winner) {
     else
     {
             console.log("player lost the tournament");
-            // roomSocket.close();
-            // show HTML to say sorry loser
+
+            if (isHost)
+                gameRoomSocket.send(JSON.stringify({action: 'player_left_self'}));
+            else
+                roomSocket.send(JSON.stringify({action: 'player_left_self'}));            // show HTML to say sorry loser
     }
     var mainElement = document.getElementById('content');
     mainElement.innerHTML = ''; // Remove all inner HTML content  

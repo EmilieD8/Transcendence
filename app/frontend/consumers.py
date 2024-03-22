@@ -125,6 +125,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+        elif action == 'player_left_self':
+            await self.send(text_data=json.dumps({'action': 'player_left_self', 'room_id': room_id}))
+
         elif action == 'create_room_pong':
             host_name = data.get('host_name')
             room_settings = data.get('room_settings')
@@ -389,6 +392,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'type': 'room_to_be_closed',
                 }
             )
+
+    async def player_left_self(self, event):
+        await self.send(text_data=json.dumps({
+            'action': 'player_left_self',
+            'channel_name': event['channel_name']
+        }))
 
     async def room_to_be_closed(self, event):
         await self.send(text_data=json.dumps({
