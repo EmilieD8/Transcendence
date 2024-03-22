@@ -17,7 +17,7 @@ class GameRoomManagerPong:
 
     @classmethod
     def create_room_pong_tournament(cls, host_name, room_settings, round):
-        room_id = f"{host_name}_Game"
+        room_id = f"{host_name}_Game_tournament"
         cls.rooms[room_id] = {"host": host_name, "guest": None, "num_players": 2, "room_settings": room_settings, "round": round}
         return room_id
 
@@ -27,7 +27,7 @@ class GameRoomManagerPong:
 
     @classmethod
     def list_rooms_pong_tournament(cls):
-        return [room_id for room_id, details in cls.rooms.items() if details["guest"] is None]
+        return [room_id for room_id, details in cls.rooms.items() if details["guest"] is None and details["round"] > 0]
 
     @classmethod
     def join_room_pong(cls, room_id, guest_name):
@@ -105,7 +105,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             host_name = data.get('host_name')
             room_settings = data.get('room_settings')
             round = data.get('round')
-            room_id = GameRoomManagerPong.create_room_pong(host_name, room_settings, round)
+            room_id = GameRoomManagerPong.create_room_pong_tournament(host_name, room_settings, round)
             await self.send(text_data=json.dumps({'action': 'room_created_pong', 'room_id': room_id}))
 
         elif action == 'create_room_pong':
@@ -355,6 +355,21 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'round': data['round']
                 }
             )
+
+        elif action == 'adjust_second_round':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'adjust_second_round',
+                    'mainHostLaunched': data['mainHostLaunched']
+                }
+            )
+
+    async def adjust_second_round(self, event):
+        await self.send(text_data=json.dumps({
+            'action': 'adjust_second_round',
+            'mainHostLaunched': event['mainHostLaunched']
+        }))
 
     async def change_tournament_round(self, event):
         await self.send(text_data=json.dumps({

@@ -209,7 +209,7 @@ function scoreChoice() {
         });
         scoreTwelve.addEventListener("click", function() {
             resolve(true);
-            scoreToDo = 12;
+            scoreToDo = 1; // CHANGED FOR DEBUGGING
             document.getElementById('choice').remove();
         });
         scoreEighteen.addEventListener("click", function() {
@@ -340,15 +340,18 @@ let i = 1;
 let mainHostLaunched = false;
 let otherRoomClosed = false;
 let tournamentRound = 0;
+let hostTournament = false;
+let clientTournament = false;
 
 async function tournamentLaunch()
 {
+    hostTournament = true;
     tournamentRound = 1;
     var mainElementT = document.getElementById('content');
 	mainElementT.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
 	let hostNameT = "{{ user.username }}";
     namePlayerTournament[0] = hostNameT;
-    let sanitizedRoomNameT = encodeURIComponent(`${hostNameT}_Game`).replace(/'/g, ""); // Sanitize and remove special characters
+    let sanitizedRoomNameT = encodeURIComponent(`${hostNameT}_Game_tournament`).replace(/'/g, ""); // Sanitize and remove special characters
     let socketT = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
     console.log("round is:" + tournamentRound);
     socketT.onopen = function(event) {
@@ -402,17 +405,22 @@ async function tournamentLaunch()
                         gameRoomSocketT.send(JSON.stringify({action: 'launching_room', nameAgainst: namePlayerTournament[determinedHostOrClient(namePlayerTournament) + 1]}));
                         // gameRoomSocketT.close();
                         remoteHost();
-                        mainHostLaunched = true;
-                        if (otherRoomClosed === true)
-                            gameRoomSocketT.close();
+                        // mainHostLaunched = true;
+                        // if (otherRoomClosed === true)
+                        //     gameRoomSocketT.close();
                     });
                 }
                 if (data.action === 'all_room_launched')
                 {
                     console.log("all room launched");
                     otherRoomClosed = true;
-                    if (mainHostLaunched === true)
-                        gameRoomSocketT.close();
+                    // if (mainHostLaunched === true)
+                        // gameRoomSocketT.close();
+                }
+                if (data.action === 'adjust_second_round')
+                {
+                    mainHostLaunched = data.mainHostLaunched;
+                    console.log("second player of the second round should be client");
                 }
             }
         }
@@ -420,6 +428,7 @@ async function tournamentLaunch()
 }
 async function tournamentClient()
 {
+    clientTournament = true;
     let gameLaunched = false;
     let socketC = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
 
@@ -456,14 +465,16 @@ async function tournamentClient()
     function joinGameRoomTournamentClient(roomId) {
         socketC.close(); // Close the WebSocket connection to the lobby
         // Open a new WebSocket connection for the selected room
-        roomSocket = new WebSocket(`wss://${window.location.host}/wss/socket-server/${roomId}/`);
-        roomSocket.onopen = function() {
+        roomSocketC = new WebSocket(`wss://${window.location.host}/wss/socket-server/${roomId}/`);
+        roomSocketC.onopen = function() {
             // Notify the server that the client has joined the room
             console.log("Game room connection established for client.");
-            roomSocket.send(JSON.stringify({ action: 'join_room_pong_tournament', room_id: roomId , guest_name: "{{ user.username }}"}));
-            namePlayer[0] =  roomId.replace('_Game', '');
+            roomSocketC.send(JSON.stringify({ action: 'join_room_pong_tournament', room_id: roomId , guest_name: "{{ user.username }}"}));
+            namePlayerTournament[0] =  roomId.replace('_Game_tournament', '');
+            console.log("host name is : ", namePlayerTournament[0]);
+            console.log("room id is : ", roomId);
         };
-        roomSocket.onmessage = function(event) {
+        roomSocketC.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.action === 'display_tournament_turn') {
                 console.log("Displaying tournament turn");
@@ -486,9 +497,9 @@ async function tournamentClient()
                         //startGame = true;
                         document.getElementById('choice').remove();
                         console.log("is host");
-                        roomSocket.send(JSON.stringify({action: 'launching_room', nameAgainst: namePlayerTournament[determinedHostOrClient(namePlayerTournament) + 1]}));
+                        roomSocketC.send(JSON.stringify({action: 'launching_room', nameAgainst: namePlayerTournament[determinedHostOrClient(namePlayerTournament) + 1]}));
                         // roomSocket.close(); maybe to close it at the very end ?
-                        roomSocket.send(JSON.stringify({action: 'all_room_launched'}));
+                        roomSocketC.send(JSON.stringify({action: 'all_room_launched'}));
                         // roomSocket.close();
                         remoteHost();
                 });
@@ -517,6 +528,12 @@ async function tournamentClient()
                         remoteClient();
                     });
                     }
+                }
+                if (data.action === 'adjust_second_round')
+                {
+
+                    console.log("message received");
+                    console.log(data.message);
                 }
             // if (data.action === 'all_room_launched')
             // {
@@ -1210,6 +1227,35 @@ function endGameTournament(winner) {
         console.error('Error updating game result:', error);
         // Optionally, handle fetch error
     });
+    if (hostTournament === true)
+        gameRoomSocketT.send(JSON.stringify({action: 'send_message_to_all', message: "we are sending a message to everybody"}));
+    else
+        roomSocketC.send(JSON.stringify({action: 'send_message_to_all', message: "we are sending a message to everybody"}));
+    if (tournamentRound === 1 && winner === "{{user.username}}")
+    {
+        console.log("game ended first round and launch second round as host");
+        tournamentRound++;
+        if (tournamentRound === 2)
+        {
+            // roomSocket.send(JSON.stringify({action: 'change_tournament_round', round: tournamentRound}));
+            tournamentLaunch();
+        }
+        else
+        {
+            //display stuff to say that they won the tournament
+        }
+    }
+    else if (tournamentRound === 2 && winner === "{{user.username}}")
+    {
+        console.log("game ended first round and launch second round as guest");
+        tournamentClient();
+        // roomSocketC.close();
+    }
+    else
+    {
+        console.log("player lost the tournament");
+        // show HTML to say sorry loser
+    }
     var mainElement = document.getElementById('content');
     mainElement.innerHTML = ''; // Remove all inner HTML content  
     mainElement.innerHTML = '<div id="endGame" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
