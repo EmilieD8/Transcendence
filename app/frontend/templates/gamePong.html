@@ -339,17 +339,20 @@ let namePlayerTournament = [];
 let i = 1;
 let mainHostLaunched = false;
 let otherRoomClosed = false;
+let tournamentRound = 0;
+
 async function tournamentLaunch()
 {
+    tournamentRound = 1;
     var mainElementT = document.getElementById('content');
 	mainElementT.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
 	let hostNameT = "{{ user.username }}";
     namePlayerTournament[0] = hostNameT;
     let sanitizedRoomNameT = encodeURIComponent(`${hostNameT}_Game`).replace(/'/g, ""); // Sanitize and remove special characters
     let socketT = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
-    console.log("numPlayers: ", numberPlayers);
+    console.log("round is:" + tournamentRound);
     socketT.onopen = function(event) {
-        socketT.send(JSON.stringify({ action: 'create_room_pong', host_name: hostNameT, room_settings: numberPlayers }));
+        socketT.send(JSON.stringify({ action: 'create_room_pong_tournament', host_name: hostNameT, room_settings: numberPlayers, round: tournamentRound}));
     };
     socketT.onmessage = function(event) {
         const data = JSON.parse(event.data);
@@ -373,7 +376,8 @@ async function tournamentLaunch()
                         if (i === numberPlayers - 1)
                         {
                             console.log("send info tournament");
-                            gameRoomSocketT.send(JSON.stringify({ action: 'display_tournament_turn', namePlayerTournament: namePlayerTournament, score: scoreToDo}));
+                            tournamentRound = 1;
+                            gameRoomSocketT.send(JSON.stringify({ action: 'display_tournament_turn', namePlayerTournament: namePlayerTournament, score: scoreToDo, round: tournamentRound}));
                         }
                         else
                             i++;
@@ -414,19 +418,19 @@ async function tournamentLaunch()
         }
     }
 }
-
 async function tournamentClient()
 {
+    let gameLaunched = false;
     let socketC = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
 
     socketC.onopen = function(event) {
         // Request the list of active game rooms once the WebSocket connection is open
-        socketC.send(JSON.stringify({ action: 'list_rooms_pong' }));
+        socketC.send(JSON.stringify({ action: 'list_rooms_pong_tournament' }));
     };
 
     socketC.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        if (data.action === 'list_rooms_pong') {
+        if (data.action === 'list_rooms_pong_tournament') {
             const games = data.rooms; // Array of active game rooms
             var gameList = document.getElementById('content');
             gameList.innerHTML = ''; // Clear previous content
@@ -463,6 +467,7 @@ async function tournamentClient()
             const data = JSON.parse(event.data);
             if (data.action === 'display_tournament_turn') {
                 console.log("Displaying tournament turn");
+                tournamentRound = data.round;
                 namePlayerTournament = data.namePlayerTournament;           
                 scoreToDo = data.score;             
                 var mainElementT = document.getElementById('content');
@@ -489,13 +494,15 @@ async function tournamentClient()
                 });
                 }
             }
-            if (data.action === 'launching_room') {
+            if (data.action === 'launching_room' && gameLaunched === false) {
                 console.log("launching room");
                 nameAgainst = data.nameAgainst;
                 console.log("nameAgainst: ", nameAgainst);
                 if (nameAgainst === "{{ user.username }}")
                 {
+                    gameLaunched = true;
                     console.log("launching room inside");
+
                     var mainElementT = document.getElementById('content');
                     mainElementT.innerHTML += '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">' +
                         'Your room is ready </p>';
@@ -658,12 +665,12 @@ async function remoteClient() {
             if (data.action === 'update_ball_position_pong') {
                 newBall.x = data.ball_x;
                 newBall.y = data.ball_y;
-                console.log("ball position received");
+                // console.log("ball position received");
             }
             if (data.action === 'update_player_scores_pong') {
                 newPlayer1Score = data.player1;
                 newPlayer2Score = data.player2;
-                console.log("player scores received");
+                // console.log("player scores received");
             }
             if (data.action === 'game_ended_pong') {
                 endGame(data.winner);
@@ -671,7 +678,31 @@ async function remoteClient() {
             }
             if (data.action === 'game_ended_pong_tournament') {
                 endGameTournament(data.winner);
-                console.log("game ended");
+                if (tournamentRound === 1 && data.winner === "{{user.username}}")
+                {
+                    console.log("game ended first round and launch second round as host");
+                    tournamentRound++;
+                    if (tournamentRound === 2)
+                    {
+                        roomSocket.send(JSON.stringify({action: 'change_tournament_round', round: tournamentRound}));
+                        tournamentLaunch();
+                    }
+                    else
+                    {
+                        //display stuff to say that they won the tournament
+                    }
+                }
+                else if (tournamentRound === 2 && data.winner === "{{user.username}}")
+                {
+                    console.log("game ended first round and launch second round as guest");
+                    tournamentClient();
+                    roomSocket.close();
+                }
+                else
+                {
+                    console.log("player lost the tournament");
+                    // show HTML to say sorry loser
+                }
             }
             if (data.action === 'update_player_position') {
                 if (data.player === 'player1') {
@@ -906,7 +937,7 @@ function update() {
         ball.x += ball.velocityX;
         ball.y += ball.velocityY;
         gameRoomSocket.send(JSON.stringify({ action: 'update_ball_position_pong', ball_x: ball.x, ball_y: ball.y }));
-        console.log("ball position sent");
+        // console.log("ball position sent");
     }
     else if (remote === true) {
         ball.x = newBall.x;
@@ -927,7 +958,8 @@ function update() {
             if (player2Score >= scoreToDo){
                 if (tournament === true)
                 {
-                    endGame(player2.name);
+                    endGameTournament(player2.name);
+                    console.log("sending to end game tournament");
                     gameRoomSocket.send(JSON.stringify({ action: 'game_ended_pong_tournament', winner: player2.name}));
                 }
                 else
@@ -942,7 +974,8 @@ function update() {
             if (player1Score >= scoreToDo){
                 if (tournament === true)
                 {
-                    endGame(player1.name);
+                    endGameTournament(player1.name);
+                    console.log("sending to end game tournament");
                     gameRoomSocket.send(JSON.stringify({ action: 'game_ended_pong_tournament', winner: player1.name}));
                 }
                 else
@@ -955,7 +988,7 @@ function update() {
                 resetGame(-1);
         }
         gameRoomSocket.send(JSON.stringify({ action: 'update_player_scores_pong', player1: player1Score, player2: player2Score }));
-        console.log("player scores sent");
+        // console.log("player scores sent");
     }
     else if (remote === true) {
         player1Score = newPlayer1Score;
@@ -1154,7 +1187,7 @@ function endGame(winner) {
     
 }
 
-function endGame(winner) {
+function endGameTournament(winner) {
     gameEnded = true;
     console.log(winner + " won !");
     fetch('/update_game_result_pong/', {

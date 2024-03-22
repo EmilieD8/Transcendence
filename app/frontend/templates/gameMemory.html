@@ -320,7 +320,7 @@ async function remoteHost() {
 		socket.send(JSON.stringify({ 
 			action: 'create_room_memory', 
 			host_name: hostName, 
-			room_settings: sanitizedRoomName, 
+			room_name: sanitizedRoomName, 
 		}));
     };
     
