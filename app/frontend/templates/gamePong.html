@@ -419,7 +419,9 @@ async function tournamentLaunch()
                 }
                 if (data.action === 'adjust_second_round')
                 {
-                    mainHostLaunched = data.mainHostLaunched;
+                    console.log("mainHostLaunched is : ", mainHostLaunched);
+                    mainHostLaunched = true;
+                    numPlayers = data.num_players;
                     console.log("second player of the second round should be client");
                 }
             }
@@ -531,7 +533,9 @@ async function tournamentClient()
                 }
                 if (data.action === 'adjust_second_round')
                 {
-
+                    console.log("mainHostLaunched is : ", mainHostLaunched);
+                    mainHostLaunched = true;
+                    numPlayers = data.num_players;
                     console.log("message received");
                     console.log(data.message);
                 }
@@ -1227,34 +1231,67 @@ function endGameTournament(winner) {
         console.error('Error updating game result:', error);
         // Optionally, handle fetch error
     });
-    if (hostTournament === true)
-        gameRoomSocketT.send(JSON.stringify({action: 'send_message_to_all', message: "we are sending a message to everybody"}));
-    else
-        roomSocketC.send(JSON.stringify({action: 'send_message_to_all', message: "we are sending a message to everybody"}));
-    if (tournamentRound === 1 && winner === "{{user.username}}")
+    // if (tournamentRound === 1 && winner === "{{user.username}}")
+    // {
+    //     console.log("game ended first round and launch second round as host");
+    //     tournamentRound++;
+    //     if (tournamentRound === 2)
+    //     {
+    //         mainHostLaunched = true;
+    //         if (hostTournament === true)
+    //             gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round'}));
+    //         else
+    //             roomSocketC.send(JSON.stringify({action: 'adjust_second_round'}));
+    //         tournamentLaunch();
+    //     }
+    //     else
+    //     {
+    //         console.log("user won the tournament");
+    //     }
+    // }
+    // else if (tournamentRound === 1 && winner === "{{user.username}}" && mainHostLaunched === true)
+    // {
+    //     console.log("game ended first round and launch second round as guest");
+    //     tournamentClient();
+    //     // roomSocketC.close();
+    // }
+    // else
+    // {
+    //     console.log("player lost the tournament");
+    //     // show HTML to say sorry loser
+    // }
+    if (winner === "{{user.username}}")
     {
-        console.log("game ended first round and launch second round as host");
-        tournamentRound++;
-        if (tournamentRound === 2)
+        if (tournamentRound === 1)
         {
-            // roomSocket.send(JSON.stringify({action: 'change_tournament_round', round: tournamentRound}));
-            tournamentLaunch();
+            tournamentRound++;
+            console.log("MAIN HOST LAUNCHED IS : ", mainHostLaunched);
+            if (tournamentRound === 2 && mainHostLaunched === false)
+            {
+                console.log("game ended first round and launch second round as host");
+                if (hostTournament === true)
+                    gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round', numPlayers: 2}));
+                else
+                    roomSocketC.send(JSON.stringify({action: 'adjust_second_round', numPlayers: 2}));
+                tournamentLaunch();
+            }
+            else
+            {
+                console.log("launching second round as client");
+                tournamentClient();
+            }
         }
         else
         {
-            //display stuff to say that they won the tournament
+            console.log("player won the tournament");
+            // show HTML to say congratulations
+            //here can close all websockets.
         }
-    }
-    else if (tournamentRound === 2 && winner === "{{user.username}}")
-    {
-        console.log("game ended first round and launch second round as guest");
-        tournamentClient();
-        // roomSocketC.close();
     }
     else
     {
-        console.log("player lost the tournament");
-        // show HTML to say sorry loser
+            console.log("player lost the tournament");
+            // show HTML to say sorry loser
     }
     var mainElement = document.getElementById('content');
     mainElement.innerHTML = ''; // Remove all inner HTML content  

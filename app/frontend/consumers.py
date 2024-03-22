@@ -361,14 +361,14 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'adjust_second_round',
-                    'mainHostLaunched': data['mainHostLaunched']
+                    'num_players': data['num_players']
                 }
             )
 
     async def adjust_second_round(self, event):
         await self.send(text_data=json.dumps({
             'action': 'adjust_second_round',
-            'mainHostLaunched': event['mainHostLaunched']
+            'num_players': event['num_players']
         }))
 
     async def change_tournament_round(self, event):
