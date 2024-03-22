@@ -424,6 +424,11 @@ async function tournamentLaunch()
                     numPlayers = data.num_players;
                     console.log("second player of the second round should be client");
                 }
+                if (data.action === 'room_to_be_closed')
+                {
+                    console.log("room to be closed");
+                    gameRoomSocketT.close();
+                }
             }
         }
     }
@@ -531,19 +536,19 @@ async function tournamentClient()
                     });
                     }
                 }
-                if (data.action === 'adjust_second_round')
-                {
-                    console.log("mainHostLaunched is : ", mainHostLaunched);
-                    mainHostLaunched = true;
-                    numPlayers = data.num_players;
-                    console.log("message received");
-                    console.log(data.message);
-                }
-            // if (data.action === 'all_room_launched')
-            // {
-            //     console.log("all room launched");
-            //     roomSocket.close();
-            // }
+            if (data.action === 'adjust_second_round')
+            {
+                console.log("mainHostLaunched is : ", mainHostLaunched);
+                mainHostLaunched = true;
+                numPlayers = data.num_players;
+                console.log("message received");
+                console.log(data.message);
+            }
+            if (data.action === 'room_to_be_closed')
+            {
+                console.log("room to be closed");
+                roomSocketC.close();
+            }
         }
     }
 }
@@ -745,7 +750,6 @@ async function remoteClient() {
 			if (data.type === 'player_left') {
 				console.log('Player left the game');
 			}
- 
         };
     }
 }
@@ -1229,37 +1233,7 @@ function endGameTournament(winner) {
     })
     .catch(error => {
         console.error('Error updating game result:', error);
-        // Optionally, handle fetch error
     });
-    // if (tournamentRound === 1 && winner === "{{user.username}}")
-    // {
-    //     console.log("game ended first round and launch second round as host");
-    //     tournamentRound++;
-    //     if (tournamentRound === 2)
-    //     {
-    //         mainHostLaunched = true;
-    //         if (hostTournament === true)
-    //             gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round'}));
-    //         else
-    //             roomSocketC.send(JSON.stringify({action: 'adjust_second_round'}));
-    //         tournamentLaunch();
-    //     }
-    //     else
-    //     {
-    //         console.log("user won the tournament");
-    //     }
-    // }
-    // else if (tournamentRound === 1 && winner === "{{user.username}}" && mainHostLaunched === true)
-    // {
-    //     console.log("game ended first round and launch second round as guest");
-    //     tournamentClient();
-    //     // roomSocketC.close();
-    // }
-    // else
-    // {
-    //     console.log("player lost the tournament");
-    //     // show HTML to say sorry loser
-    // }
     if (winner === "{{user.username}}")
     {
         if (tournamentRound === 1)
@@ -1268,21 +1242,30 @@ function endGameTournament(winner) {
             console.log("MAIN HOST LAUNCHED IS : ", mainHostLaunched);
             if (tournamentRound === 2 && mainHostLaunched === false)
             {
+                numPlayers /= 2;
                 console.log("game ended first round and launch second round as host");
                 if (hostTournament === true)
-                    gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round', numPlayers: 2}));
+                    gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
                 else
-                    roomSocketC.send(JSON.stringify({action: 'adjust_second_round', numPlayers: 2}));
-                tournamentLaunch();
+                    roomSocketC.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
+                // gameRoomSocket.close();
+                // tournamentLaunch();
+                remoteHost();
             }
             else
             {
-                console.log("launching second round as client");
-                tournamentClient();
+                console.log("launching second round as client and closing the rooms");
+                // roomSocket.close();
+                // tournamentClient();
+                remoteClient();
             }
         }
         else
         {
+            if (hostTournament === true)
+                gameRoomSocketT.send(JSON.stringify({action: 'room_to_be_closed'}));
+            else
+                roomSocketC.send(JSON.stringify({action: 'room_to_be_closed'}));
             console.log("player won the tournament");
             // show HTML to say congratulations
             //here can close all websockets.
@@ -1291,6 +1274,7 @@ function endGameTournament(winner) {
     else
     {
             console.log("player lost the tournament");
+            // roomSocket.close();
             // show HTML to say sorry loser
     }
     var mainElement = document.getElementById('content');

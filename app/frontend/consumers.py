@@ -97,6 +97,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+    async def player_left(self, event):
+        player_channel_name = event['channel_name']
+        await self.send(text_data=json.dumps({
+            'type': 'player_left',
+            'channel_name': player_channel_name,
+            'message': 'Player has left the game.'
+        }))
+
     async def receive(self, text_data):
         data = json.loads(text_data)
         action = data.get('action')
@@ -107,6 +115,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             round = data.get('round')
             room_id = GameRoomManagerPong.create_room_pong_tournament(host_name, room_settings, round)
             await self.send(text_data=json.dumps({'action': 'room_created_pong', 'room_id': room_id}))
+
+        elif action == 'player_left':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'player_left',
+                    'channel_name': self.channel_name
+                }
+            )
 
         elif action == 'create_room_pong':
             host_name = data.get('host_name')
@@ -361,14 +378,27 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'adjust_second_round',
-                    'num_players': data['num_players']
+                    'numPlayers': data['numPlayers']
                 }
             )
+
+        elif action == 'room_to_be_closed':
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'room_to_be_closed',
+                }
+            )
+
+    async def room_to_be_closed(self, event):
+        await self.send(text_data=json.dumps({
+            'action': 'room_to_be_closed'
+        }))
 
     async def adjust_second_round(self, event):
         await self.send(text_data=json.dumps({
             'action': 'adjust_second_round',
-            'num_players': event['num_players']
+            'numPlayers': event['numPlayers']
         }))
 
     async def change_tournament_round(self, event):
