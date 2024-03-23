@@ -264,7 +264,7 @@ async function showGamePong() {
 
 
 	startGame = false;
-	tournament = false;
+	// tournament = false;
 	singleGame = false;
 	numberPlayers = 0;
 	namePlayer = [];
@@ -342,6 +342,7 @@ let otherRoomClosed = false;
 let tournamentRound = 0;
 let hostTournament = false;
 let clientTournament = false;
+let playerFinal = 0;
 
 async function tournamentLaunch()
 {
@@ -423,11 +424,19 @@ async function tournamentLaunch()
                     mainHostLaunched = true;
                     numPlayers = data.num_players;
                     console.log("second player of the second round should be client");
+
                 }
                 if (data.action === 'room_to_be_closed')
                 {
-                    console.log("room to be closed");
+                    console.log("room to be closed gameRoomSocketTournament");
                     gameRoomSocketT.close();
+                }
+                if (data.action === 'finale_host_back')
+                {
+                    console.log("finale host back");
+                    playerFinal = 1;
+                    console.log("playerFinal is : ", playerFinal);
+                    gameRoomSocketT.send(JSON.stringify({action: 'finale_host_back', playerFinal: playerFinal}));
                 }
             }
         }
@@ -541,12 +550,10 @@ async function tournamentClient()
                 console.log("mainHostLaunched is : ", mainHostLaunched);
                 mainHostLaunched = true;
                 numPlayers = data.num_players;
-                console.log("message received");
-                console.log(data.message);
             }
             if (data.action === 'room_to_be_closed')
             {
-                console.log("room to be closed");
+                console.log("room to be closed RoomSocketClient");
                 roomSocketC.close();
             }
         }
@@ -562,8 +569,19 @@ function determinedHostOrClient(namePlayerTournament) {
 }
 
 async function remoteHost() {
-    // if (gameRoomSocket !== null && gameRoomSocket.readyState === WebSocket.OPEN)
-    //     gameRoomSocket.close();
+    namePlayer.length = 0;
+    if (gameRoomSocket !== null && gameRoomSocket.readyState === WebSocket.OPEN)
+    {
+        console.log("closing gameRoomSocket in the remoteHost function");
+        gameRoomSocket.send(JSON.stringify({action: 'room_to_be_closed'}));
+        gameRoomSocket.close();
+    }
+    else if (roomSocket !== null && roomSocket.readyState === WebSocket.OPEN)
+    {
+        console.log("closing roomSocket in the remoteHost function");
+        roomSocket.send(JSON.stringify({action: 'room_to_be_closed'}));
+        roomSocket.close();
+    }
 	var mainElement = document.getElementById('content');
 	mainElement.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
 	let hostName = "{{ user.username }}"; 
@@ -591,6 +609,9 @@ async function remoteHost() {
                     console.log(`${data.guest_name} has joined the game.`);
                     if (data.guest_name)
                         namePlayer[1] = data.guest_name;
+                    namePlayer[0] = hostName;
+                    console.log("HOST namePlayer[0] is : ", namePlayer[0], " and namePlayer[1] is : ", namePlayer[1]);
+
                 }
                 // Handle countdown message
                 if (data.action === 'countdown_pong')
@@ -625,6 +646,11 @@ async function remoteHost() {
                     gameRoomSocket.close();
 					console.log('Player left the game SELF');
 				}
+                if (data.action === 'room_to_be_closed')
+                {
+                    console.log("room to be closed remoteHost");
+                    gameRoomSocket.close();
+                }
             }
             gameRoomSocket.onclose = function() {
                 console.log("Game room connection closed.");
@@ -640,8 +666,20 @@ async function remoteHost() {
 let roomSocket = null;
 
 async function remoteClient() {
-    if (roomSocket !== null && roomSocket.readyState === WebSocket.OPEN)
+    console.log("remoteClient");
+    namePlayer.length = 0;
+    if (gameRoomSocket !== null && gameRoomSocket.readyState === WebSocket.OPEN)
+    {
+        console.log("closing gameRoomSocket in the remoteHost function");
+        gameRoomSocket.send(JSON.stringify({action: 'room_to_be_closed'}));
+        gameRoomSocket.close();
+    }
+    else if (roomSocket !== null && roomSocket.readyState === WebSocket.OPEN)
+    {
+        console.log("closing roomSocket in the remoteHost function");
+        roomSocket.send(JSON.stringify({action: 'room_to_be_closed'}));
         roomSocket.close();
+    }
     let socket = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
 
     socket.onopen = function(event) {
@@ -684,6 +722,7 @@ async function remoteClient() {
             console.log("Game room connection established for client.");
             roomSocket.send(JSON.stringify({ action: 'join_room_pong', room_id: roomId , guest_name: "{{ user.username }}"}));
             namePlayer[0] =  roomId.replace('_Game', '');
+            namePlayer[1] = "{{ user.username }}";
         };
         roomSocket.onmessage = function(event) {
             const data = JSON.parse(event.data);
@@ -691,6 +730,7 @@ async function remoteClient() {
                 updateCountdownDisplay(data.message);
             else if (data.action === 'start_game_pong') {
                 console.log('Game is starting...');
+                console.log("namePlayer[0] is : ", namePlayer[0], " and namePlayer[1] is : ", namePlayer[1]);
                 let countdownElement = document.getElementById('countdown');
                 if (countdownElement) {
                     countdownElement.remove();
@@ -711,34 +751,8 @@ async function remoteClient() {
                 endGame(data.winner);
                 console.log("game ended");
             }
-            if (data.action === 'game_ended_pong_tournament') {
+            if (data.action === 'game_ended_pong_tournament')
                 endGameTournament(data.winner);
-                // if (tournamentRound === 1 && data.winner === "{{user.username}}")
-                // {
-                //     console.log("game ended first round and launch second round as host");
-                //     tournamentRound++;
-                //     if (tournamentRound === 2)
-                //     {
-                //         roomSocket.send(JSON.stringify({action: 'change_tournament_round', round: tournamentRound}));
-                //         tournamentLaunch();
-                //     }
-                //     else
-                //     {
-                //         //display stuff to say that they won the tournament
-                //     }
-                // }
-                // else if (tournamentRound === 2 && data.winner === "{{user.username}}")
-                // {
-                //     console.log("game ended first round and launch second round as guest");
-                //     tournamentClient();
-                //     // roomSocket.close();
-                // }
-                // else
-                // {
-                //     console.log("player lost the tournament");
-                //     // show HTML to say sorry loser
-                // }
-            }
             if (data.action === 'update_player_position') {
                 if (data.player === 'player1') {
                     player1.y = data.position_y;
@@ -764,6 +778,11 @@ async function remoteClient() {
                 roomSocket.close();
 				console.log('Player left the game SELF');
 			}
+            if (data.action === 'room_to_be_closed')
+            {
+                console.log("room to be closed remoteClient");
+                roomSocket.close();
+            }
         };
     }
 }
@@ -904,10 +923,9 @@ function launchGamePong() {
     player1.y = board.height / 2 - playerHeight / 2;
     player2.x = board.width - playerWidth - 10;
     player2.y = board.height / 2 - playerHeight / 2;
-    if (!player1.name)
-        player1.name = namePlayer[0];
-    if (!player2.name)
-        player2.name = namePlayer[1];
+    player1.name = namePlayer[0];
+    player2.name = namePlayer[1];
+    console.log("IN MAIN FUNCTION PONG player1 name is : ", player1.name, " and player2 name is : ", player2.name);
     //set ball
     ball.x = board.width / 2;
     ball.y = board.height / 2;
@@ -1185,6 +1203,7 @@ function resetGame(direction)
 
 function endGame(winner) {
     gameEnded = true;
+    console.log("IN END FUNCTION");
     console.log(winner + " won !");
     fetch('/update_game_result_pong/', {
         method: 'POST',
@@ -1225,10 +1244,23 @@ function endGame(winner) {
     // }); {% endcomment %}
     
 }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-function endGameTournament(winner) {
+// Usage
+async function sleepytime() {
+  console.log('Before sleep');
+  await sleep(10000); // Sleep for 2000 milliseconds (2 seconds)
+  console.log('After sleep');
+}
+
+
+async function endGameTournament(winner) {
     gameEnded = true;
-    console.log(winner + " won !");
+    console.log("IN END TOURNAMENT FUNCTION: namePlayer[0] is : ", namePlayer[0], " and namePlayer[1] is : ", namePlayer[1])
+
+    console.log(winner + " won !  WE ARE IN ENDGAME TOURNAMENT FUNCTION");
     fetch('/update_game_result_pong/', {
         method: 'POST',
         headers: {
@@ -1248,8 +1280,17 @@ function endGameTournament(winner) {
     .catch(error => {
         console.error('Error updating game result:', error);
     });
+    var mainElement = document.getElementById('content');
+    mainElement.innerHTML = ''; // Remove all inner HTML content  
+    mainElement.innerHTML = '<div id="endGame" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
+        '<p style="text-align: center; font-size:4em;">Game Over ! </p>' +
+        '<p style="text-align: center; font-size:2em;">' + winner + ' won ! <br>' + //<br> If you want to play again with the same settings, press the button below.</p>' +
+        '<iframe src="https://giphy.com/embed/OScDfyJIQaXe" width="480" height="480" frameborder="0" class="giphy-embed" allowfullscreen></iframe>' +
+        '<p><a href="https://giphy.com/gifs/rabbids-dance-cute-OScDfyJIQaXe"></a></p>' +
+        '</div>';
     if (winner === "{{user.username}}")
     {
+        console.log("ENTERING WINNER FUNCTION")
         if (tournamentRound === 1)
         {
             tournamentRound++;
@@ -1262,18 +1303,24 @@ function endGameTournament(winner) {
             {
                 numPlayers /= 2;
                 console.log("game ended first round and launch second round as host");
+                console.log("            TOURNAMENT ROUND IS : ", tournamentRound);
                 if (hostTournament === true)
                     gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
                 else
                     roomSocketC.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
                 // tournamentLaunch();
-                remoteHost();
+                // remoteHost();
             }
             else
             {
                 console.log("launching second round as client and closing the rooms");
+                tournamentRound++;
                 // roomSocket.close();
                 // tournamentClient();
+                // if (hostTournament === true)
+                //     gameRoomSocketT.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
+                // else
+                //     roomSocketC.send(JSON.stringify({action: 'adjust_second_round', numPlayers: numPlayers}));
                 remoteClient();
             }
         }
@@ -1284,27 +1331,47 @@ function endGameTournament(winner) {
             else
                 roomSocketC.send(JSON.stringify({action: 'room_to_be_closed'}));
             console.log("player won the tournament");
+            tournament = false;
             // show HTML to say congratulations
             //here can close all websockets.
         }
     }
     else
     {
-            console.log("player lost the tournament");
+        while (playerFinal !== 2) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+        }
+        // await waitForplayerFinal();
+        console.log("player lost the tournament");
+        tournament = false;
+        if (playerFinal === 2) {
+            console.log("loser deletes room");
 
-            if (isHost)
-                gameRoomSocket.send(JSON.stringify({action: 'player_left_self'}));
-            else
-                roomSocket.send(JSON.stringify({action: 'player_left_self'}));            // show HTML to say sorry loser
+            if (gameRoomSocket !== null && gameRoomSocket.readyState === WebSocket.OPEN)
+            {
+                console.log("closing gameRoomSocket in the loser function");
+                gameRoomSocket.send(JSON.stringify({action: 'room_to_be_closed'}));
+                gameRoomSocket.close();
+            }
+            else if (roomSocket !== null && roomSocket.readyState === WebSocket.OPEN)
+            {
+                console.log("closing roomSocket in the loser function");
+                roomSocket.send(JSON.stringify({action: 'room_to_be_closed'}));
+                roomSocket.close();
+            }
+        }
+        // if (isHost)
+        //     gameRoomSocket.send(JSON.stringify({action: 'player_left_self'}));
+        // else
+        //     roomSocket.send(JSON.stringify({action: 'player_left_self'}));            // show HTML to say sorry loser
     }
-    var mainElement = document.getElementById('content');
-    mainElement.innerHTML = ''; // Remove all inner HTML content  
-    mainElement.innerHTML = '<div id="endGame" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-		'<p style="text-align: center; font-size:4em;">Game Over ! </p>' +
-		'<p style="text-align: center; font-size:2em;">' + winner + ' won ! <br>' + //<br> If you want to play again with the same settings, press the button below.</p>' +
-		'<iframe src="https://giphy.com/embed/OScDfyJIQaXe" width="480" height="480" frameborder="0" class="giphy-embed" allowfullscreen></iframe>' +
-		'<p><a href="https://giphy.com/gifs/rabbids-dance-cute-OScDfyJIQaXe"></a></p>' +
-		'</div>';
+}
+
+async function waitForplayerFinal() {
+    // Wait until playerFinal is equal to 2
+    while (playerFinal !== 2) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+    }
 }
 
 </script>
