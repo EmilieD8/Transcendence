@@ -800,7 +800,7 @@ let boardWidth;
 let boardHeight;
 let board;
 let context;
-let velocity = 2;
+let velocity = 1;
 let keysPressed = {};
 let spaceKeyListenerAdded;
 let gameEnded;
@@ -911,8 +911,9 @@ function launchGamePong() {
     //set ball
     ball.x = board.width / 2;
     ball.y = board.height / 2;
-    context.fillStyle = "skyblue";
+    context.fillStyle ="black";
     context.fillRect(player1.x, player1.y, player1.width, player1.height);
+    context.fillStyle = "red";
     context.fillRect(player2.x, player2.y, player2.width, player2.height);
     requestAnimationFrame(update);
     // Event listener if key is pressed or release
@@ -958,7 +959,7 @@ function update() {
         return;
     requestAnimationFrame(update);
     context.clearRect(0, 0, board.width, board.height);
-    context.fillStyle = "skyblue";
+    context.fillStyle = "red";
     let newYPosition = player1.y + player1.velocityY;
     if (!outOfBounds(newYPosition))
         player1.y = newYPosition;
@@ -966,7 +967,8 @@ function update() {
     let newYPosition2 = player2.y + player2.velocityY;
     if (!outOfBounds(newYPosition2))
         player2.y = newYPosition2;
-    context.fillRect(player2.x, player2.y, player2.width, player2.height);
+        context.fillStyle = "blue";
+        context.fillRect(player2.x, player2.y, player2.width, player2.height);
     //ball
     context.beginPath();
     context.arc(ball.x + ball.radius, ball.y + ball.radius, ball.radius, 0, Math.PI * 2);
@@ -1060,21 +1062,62 @@ function update() {
 
 function checkCollision(ballY, ballX) {
     ballX -= 5;
-    let LoclPad1XPos = player1.x + player1.width / 2;
+    let LoclPad1XPos = player1.x;
     let distance1 = Math.abs(ballX - LoclPad1XPos);
     
     if (distance1 < 5 && ballY > (player1.y - playerWidth) && player1.y + player1.height + playerWidth > ballY) {
         ball.velocityX *= -1; // Reverse the x velocity
     }
     
-    ballX += 10;
-    let LoclPad2XPos = player2.x;
+    ballX += 5;
+    let LoclPad2XPos = player2.x - player2.width;
     let distance2 = Math.abs(ballX - LoclPad2XPos);
     
     if (distance2 < 5 && ballY > (player2.y - playerWidth) && player2.y + player2.height + playerWidth > ballY) {
         ball.velocityX *= -1; // Reverse the x velocity
     }
 }
+
+// function checkCollision(ballY, ballX) {
+//     ballX -= 5;
+//     let LoclPad1XPos = player1.x;
+//     let distance1 = Math.abs(ballX - LoclPad1XPos);
+    
+//     if (distance1 < 5 && ballY > (player1.y - playerWidth) && player1.y + player1.height + playerWidth > ballY) {
+//         // Determine if the collision is with the top or bottom of the panel
+//         let ballCenterY = ballY + ball.radius;
+//         let padCenterY = player1.y + player1.height / 2;
+//         let verticalDistance = Math.abs(ballCenterY - padCenterY);
+        
+//         if (verticalDistance < player1.height / 2) {
+//             // Collision with the middle part of the panel
+//             ball.velocityX *= -1; // Reverse the x velocity
+//         } else {
+//             // Collision with the top or bottom part of the panel
+//             ball.velocityY *= -1; // Reverse the y velocity
+//         }
+//     }
+    
+//     ballX += 5;
+//     let LoclPad2XPos = player2.x - player2.width;
+//     let distance2 = Math.abs(ballX - LoclPad2XPos);
+    
+//     if (distance2 < 5 && ballY > (player2.y - playerWidth) && player2.y + player2.height + playerWidth > ballY) {
+//         // Determine if the collision is with the top or bottom of the panel
+//         let ballCenterY = ballY + ball.radius;
+//         let padCenterY = player2.y + player2.height / 2;
+//         let verticalDistance = Math.abs(ballCenterY - padCenterY);
+        
+//         if (verticalDistance < player2.height / 2) {
+//             // Collision with the middle part of the panel
+//             ball.velocityX *= -1; // Reverse the x velocity
+//         } else {
+//             // Collision with the top or bottom part of the panel
+//             ball.velocityY *= -1; // Reverse the y velocity
+//         }
+//     }
+// }
+
 
 function outOfBounds(yPosition) {
     return (yPosition < 0 || yPosition > boardHeight - playerHeight);
