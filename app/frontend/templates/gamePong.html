@@ -4,39 +4,14 @@
 <div class="container">
 	<div class="row">
 		<div class="col-md-12">
-        </div>
-    </div>
-    </div>
-    {% else %}
-    <li class="nav-item">
-        <a class="nav-link" href="signIn">Sign In</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="signUp">Sign Up</a>
-    </li>
-    {% endif %}
- 
+			<h1 class="page-header">Games like back in the 80's</h1>
+			<hr>
+		</div>
+	</div>
+</div>
 <script>
 
-document.addEventListener("DOMContentLoaded", function() {
-    showGamePong();
-});
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-const csrfToken = getCookie('csrftoken');
+{% comment %} gameMenu.js {% endcomment %}
 
 let startGame;
 let singleGame;
@@ -46,7 +21,7 @@ let remote;
 let tournament;
 
 function TwoOrTournament() {
-    
+
     var main = document.getElementById('content');
     main.innerHTML += '<div id="choice"><p style="padding-top: 2em;"> Do you want to play a 1vs1 game or a tournament ? </p></div>';
     var button1vs1 = document.createElement("button");
@@ -70,7 +45,7 @@ function TwoOrTournament() {
         });
     });
 }
-                
+
 function remoteOrLocal() {
 
     var main = document.getElementById('content');
@@ -85,9 +60,9 @@ function remoteOrLocal() {
     document.getElementById('choice').appendChild(buttonLocal);
     return new Promise(function (resolve) {
         buttonRemote.addEventListener("click", function() {
-    resolve(true);
-    document.getElementById('choice').remove();
-    remote = true;
+            resolve(true);
+            document.getElementById('choice').remove();
+            remote = true;
         });
         buttonLocal.addEventListener("click", function() {
             resolve(false);
@@ -98,11 +73,11 @@ function remoteOrLocal() {
 }
 
 function decideHost() {
-    
-    let host;
+
+	let host;
 	let client;
     var main = document.getElementById('content');
-    main.innerHTML += '<div id="choice"><p style="padding-top: 2em;"> Do you want to create a new room or do you want to join an existing room ? </p></div>';
+    main.innerHTML += '<div id="choice"><p style="padding-top: 2em;"> Which type of game do you wanna play ? </p></div>';
     var buttonHost = document.createElement("button");
     var buttonClient= document.createElement("button"); 
     buttonHost.textContent = "Create New Game";
@@ -165,148 +140,141 @@ function numPlayers() {
 
 async function getNamePlayer() {
     var main = document.getElementById('content');
+    let i = 2;
+
     try {
-        const response = await fetch('/get_display_name/');
+        const response = await fetch('/get_username/');
         const data = await response.json();
-        main.innerHTML += `<p style="padding-top: 2em; display: flex; align-items:center; justify-content:center;">First player is: ${data.display_name}</p>`;
-        namePlayer.push(data.display_name);
-        
-        for (let i = 2; i <= numberPlayers; i++) {
+        main.innerHTML += `<p style="padding-top: 2em; display: flex; align-items:center; justify-content:center;">First player is: ${data.username}</p>`;
+        namePlayer.push(data.username);
+
+        for (; i <= numberPlayers; i++) {
             main.innerHTML += '<div id="choice">' +
-                '<form id="form' + i + '" style="display: flex; flex-direction: column; align-items: center;">' +
-                    '<p style="padding-top: 2em; display: flex; align-items:center; justify-content:center;" > Name of player ' + i + ' : </p>' +
-                    '<input type="text" id="name' + i + '" required>' + // Add 'required' attribute for validation
-                    '<button type="submit" class="styled-button" style="margin-top: 1em;">Submit</button>' +
-                    '</form>' +
-                    '</div>';
-                    
-                    const form = main.querySelector('#form' + i);
-                    const input = main.querySelector('#name' + i);
-                    
-                    // Wait for the form submission
-                    await new Promise(resolve => {
-                        form.addEventListener("submit", async function(event) {
-                            event.preventDefault(); // Prevent the default form submission
-                            if (input.checkValidity()) { // Check if the input is valid
-                                const newName = input.value;
-                                if (!namePlayer.includes(newName)) { // Check if newName is not already in namePlayer array
-                                    namePlayer.push(newName);
-                                    form.remove();
-                                    resolve(); // Resolve the promise to continue the loop
-                                } else {
-                                    alert('Name already exists! Please choose a different name.'); // Alert user if name already exists
-                                }
-                            } else {
-                                input.reportValidity(); // Display validation message if input is invalid
-                            }
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-            return namePlayer;
-        }
-        
-        
-        let scoreToDo = 0;
-        let debugPong = 1; // 1 not debug. 2 is directly the game, 3 is the menu and the score todo will be 1 instead of 12
-        
-        function scoreChoice() {
-            var main = document.getElementById('content');
-            main.innerHTML = `<div id="choice"><p style="padding-top: 2em; display: flex; " > Chose how many points wins: </p></div>`;
-            if (tournament === false)
-            {
-                var unlimited = document.createElement("button");
-                unlimited.textContent = "Unlimited";
-                unlimited.classList.add("styled-button");
-                document.getElementById('choice').appendChild(unlimited);
-            }
-            var scoreTwelve = document.createElement("button");
-            scoreTwelve.textContent = "12";
-            scoreTwelve.classList.add("styled-button");
-            document.getElementById('choice').appendChild(scoreTwelve);
-            var scoreEighteen = document.createElement("button");
-            scoreEighteen.textContent = "18";
-            scoreEighteen.classList.add("styled-button");
-            document.getElementById('choice').appendChild(scoreEighteen);
-            var scoreTwentyFour = document.createElement("button");
-            scoreTwentyFour.textContent = "24";
-            scoreTwentyFour.classList.add("styled-button");
-            document.getElementById('choice').appendChild(scoreTwentyFour);
-            return new Promise(function (resolve) {
-                if (tournament === false) {
-                    unlimited.addEventListener("click", function() {
-                        resolve(true);
-                        scoreToDo = 10000;
-                        document.getElementById('choice').remove();
-                    });
-                }
-                scoreTwelve.addEventListener("click", function() {
-                    resolve(true);
-                    scoreToDo = 1; // debugging
-                    document.getElementById('choice').remove();
-                });
-                scoreEighteen.addEventListener("click", function() {
-                    resolve(true);
-                    scoreToDo = 18;
-                    document.getElementById('choice').remove();
-                });
-                scoreTwentyFour.addEventListener("click", function() {
-                    resolve(true);
-                    scoreToDo = 24;
-                    document.getElementById('choice').remove();
+                '<form style="display: flex; flex-direction: column; align-items: center;">' +
+                '<p style="padding-top: 2em; display: flex; align-items:center; justify-content:center;" > Name of player ' + i + ' : </p>' +
+                '<input type="text" id="name' + i + '">' +
+                '<button type="submit" class="styled-button" style="margin-top: 1em;">Submit</button>' +
+                '</form>' +
+                '</div>';
+
+            const submitButton = main.querySelector('#choice:last-child button');
+            const input = main.querySelector('#choice:last-child input');
+
+            // Wait for the submit button click event
+            await new Promise(resolve => {
+                submitButton.addEventListener("click", function(event) {
+                    event.preventDefault(); // Prevent the default form submission
+                    if (input.value !== "") {
+                        namePlayer.push(input.value);
+                        main.querySelector('#choice:last-child').remove();
+                        resolve(); // Resolve the promise to continue the loop
+                    }
                 });
             });
         }
-        
-        let tournament_id = null;
-        
-        function startButtonTournament() {
-            tournament_id = updateStartTournamentPong(namePlayer); // sending pong true, memory false
-            var main = document.getElementById('content');
-            var choiceDiv = document.createElement("div");
-            choiceDiv.id = "choice";
-            
-            var welcomeParagraph = document.createElement("p");
-            welcomeParagraph.textContent = "Welcome to the pong tournament !\n\nThe rounds are the following:";
-            choiceDiv.appendChild(welcomeParagraph);
-            
-            for (let i = 0; i < numberPlayers - 1; i++) {
-                var matchParagraph = document.createElement("p");
-                matchParagraph.style.textAlign = "center";
-                matchParagraph.textContent = namePlayer[i] + ' against ' + namePlayer[i+1];
-                choiceDiv.appendChild(matchParagraph);
-                i++;
-            }
-            
-            var readyParagraph = document.createElement("p");
-            readyParagraph.style.textAlign = "center";
-            readyParagraph.style.paddingTop = "1em";
-            readyParagraph.textContent = "Ready to start ?\n\nLet's go !";
-            choiceDiv.appendChild(readyParagraph);
-            
-            var startButton = document.createElement("button");
-            startButton.textContent = "Start !";
-            startButton.classList.add("styled-button");
-            choiceDiv.appendChild(startButton);
-            main.appendChild(choiceDiv);
-            return new Promise(function(resolve) {
-                startButton.addEventListener("click", function() {
-                    startGame = true;
-                    choiceDiv.remove();
-                    tournament_id = tournament_id;
-                    resolve(true);
-                });
+    } catch (error) {
+        console.error('Error:', error);
+    }
+    return namePlayer;
+}
+
+
+   
+let scoreToDo = 0;
+let debugPong = 1; // 1 not debug. 2 is directly the game, 3 is the menu and the score todo will be 1 instead of 12
+
+function scoreChoice() {
+    var main = document.getElementById('content');
+    main.innerHTML += `<div id="choice"><p style="padding-top: 2em; display: flex; " > Chose how many points wins: </p></div>`;
+    if (tournament === false)
+    {
+        var unlimited = document.createElement("button");
+        unlimited.textContent = "Unlimited";
+        unlimited.classList.add("styled-button");
+        document.getElementById('choice').appendChild(unlimited);
+    }
+    var scoreTwelve = document.createElement("button");
+    scoreTwelve.textContent = "12";
+    scoreTwelve.classList.add("styled-button");
+    document.getElementById('choice').appendChild(scoreTwelve);
+    var scoreEighteen = document.createElement("button");
+    scoreEighteen.textContent = "18";
+    scoreEighteen.classList.add("styled-button");
+    document.getElementById('choice').appendChild(scoreEighteen);
+    var scoreTwentyFour = document.createElement("button");
+    scoreTwentyFour.textContent = "24";
+    scoreTwentyFour.classList.add("styled-button");
+    document.getElementById('choice').appendChild(scoreTwentyFour);
+    return new Promise(function (resolve) {
+        if (tournament === false) {
+            unlimited.addEventListener("click", function() {
+                resolve(true);
+                scoreToDo = 10000;
+                document.getElementById('choice').remove();
             });
         }
-        
-        function startButton() {
-            var main = document.getElementById('content');
-            main.innerHTML += '<div id="choice"><p style="text-align: center; padding-top:5em;"> Ready to start ? <br> <br> Let\'s go !</p></div>';
-            var startButton = document.createElement("button");
-            startButton.textContent = "Start !";
-            startButton.classList.add("styled-button");
+        scoreTwelve.addEventListener("click", function() {
+            resolve(true);
+            scoreToDo = 1; // debugging
+            document.getElementById('choice').remove();
+        });
+        scoreEighteen.addEventListener("click", function() {
+            resolve(true);
+            scoreToDo = 18;
+            document.getElementById('choice').remove();
+        });
+        scoreTwentyFour.addEventListener("click", function() {
+            resolve(true);
+            scoreToDo = 24;
+            document.getElementById('choice').remove();
+        });
+    });
+}
+
+function startButtonTournament() {
+    var main = document.getElementById('content');
+    var choiceDiv = document.createElement("div");
+    choiceDiv.id = "choice";
+    
+    var welcomeParagraph = document.createElement("p");
+    welcomeParagraph.textContent = "Welcome to the pong tournament !\n\nThe rounds are the following:";
+    choiceDiv.appendChild(welcomeParagraph);
+    
+    for (let i = 0; i < numberPlayers - 1; i++) {
+        var matchParagraph = document.createElement("p");
+        matchParagraph.style.textAlign = "center";
+        matchParagraph.textContent = namePlayer[i] + ' against ' + namePlayer[i+1];
+        choiceDiv.appendChild(matchParagraph);
+        i++;
+    }
+    
+    var readyParagraph = document.createElement("p");
+    readyParagraph.style.textAlign = "center";
+    readyParagraph.style.paddingTop = "1em";
+    readyParagraph.textContent = "Ready to start ?\n\nLet's go !";
+    choiceDiv.appendChild(readyParagraph);
+    
+    var startButton = document.createElement("button");
+    startButton.textContent = "Start !";
+    startButton.classList.add("styled-button");
+    choiceDiv.appendChild(startButton);
+    main.appendChild(choiceDiv);
+    return new Promise(function(resolve) {
+        startButton.addEventListener("click", function() {
+            startGame = true;
+            console.log("startGame is ", startGame);
+            choiceDiv.remove();
+            resolve(true);
+        });
+    });
+}
+
+function startButton() {
+    var main = document.getElementById('content');
+    main.innerHTML += '<div id="choice"><p style="text-align: center; padding-top:5em;"> Ready to start ? <br> <br> Let\'s go !</p></div>';
+    var startButton = document.createElement("button");
+    startButton.textContent = "Start !";
+    startButton.classList.add("styled-button");
     document.getElementById('choice').appendChild(startButton);
     return new Promise (function (resolve) {
         startButton.addEventListener("click", function() {
@@ -318,56 +286,60 @@ async function getNamePlayer() {
 }
 
 let namePlayer = [];
-
 async function showGamePong() {
     var mainElement = document.getElementById('content');
-	mainElement.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em; padding-top:3em;">Pong</p>';
+	mainElement.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">Pong</p>';
     gameEnded = true;
+
+
 	startGame = false;
 	tournament = false;
 	singleGame = false;
 	numberPlayers = 0;
-    remote = false;
-    local = false;
-	namePlayer.length = 0;
-    // check if all the variables are reinitialized
+	namePlayer = [];
+	
 	if (await remoteOrLocal())
 	{
-        if (await decideHost())
+		//remote Game
+        // await TwoOrTournament();
+        // if (tournament === true)
+        //     await numPlayers();
+		if (await decideHost())
 		{
             await scoreChoice();
-            namePlayer[0] = "{{  user.display_name  }}";
+            namePlayer[0] = "{{  user.username  }}";
 			//host
 			remoteHost();
 		}
-        
+
 		else
 		{
-            //client
-            namePlayer[1] = "{{  user.display_name  }}";
+			//client
+            namePlayer[1] = "{{  user.username  }}";
 			remoteClient();
 		}
 	}
 	else
 	{
-        //local Game
+		//local Game
         await TwoOrTournament();
         if (tournament === true)
-        await numPlayers();
-    else
-    numberPlayers = 2;
-await getNamePlayer();
-await scoreChoice();
-if (namePlayer.length === numberPlayers && scoreToDo !== 0)
-{
-    if (tournament === true)
-    await startButtonTournament();
-else
-await startButton();
-if (startGame === true)
-launchGamePong();
-}
-}
+            await numPlayers();
+        else
+            numberPlayers = 2;
+        await getNamePlayer();
+        await scoreChoice();
+		if (namePlayer.length  === numberPlayers && scoreToDo !== 0)
+		{
+            if (tournament === true)
+                await startButtonTournament();
+            else
+                await startButton();
+            console.log("startGame is ", startGame);
+			if (startGame === true)
+				launchGamePong();
+		}
+	}
 }
 
 let isHost = false; 
@@ -375,13 +347,13 @@ let isHost = false;
 let gameRoomSocket = null;
 
 async function remoteHost() {
-    var mainElement = document.getElementById('content');
+	var mainElement = document.getElementById('content');
 	// mainElement.innerHTML +=  '<p style="text-align: center;  font-size:2em;>Waiting for Players...</p>';
 	mainElement.innerHTML += '<p class="text-center" style="font-size: 1.5em;">Waiting for Players...</p>';
-	let hostName = "{{ user.display_name }}"; 
+	let hostName = "{{ user.username }}"; 
     let sanitizedRoomName = encodeURIComponent(`${hostName}_Game`).replace(/'/g, ""); // Sanitize and remove special characters
     let socket = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`); 
-    
+
     socket.onopen = function(event) {
         socket.send(JSON.stringify({ action: 'create_room_pong', host_name: hostName, room_name: sanitizedRoomName }));
     };
@@ -402,45 +374,45 @@ async function remoteHost() {
                 if (data.action === 'player_joined_pong') {
                     console.log(`${data.guest_name} has joined the game.`);
                     if (data.guest_name)
-                    namePlayer[1] = data.guest_name;
+                        namePlayer[1] = data.guest_name;
+                }
+                // Handle countdown message
+                if (data.action === 'game_countdown_pong')
+                    updateCountdownDisplay(data.message);
+                if (data.action === 'start_game_pong') {
+                    let countdownElement = document.getElementById('countdown');
+                    if (countdownElement) {
+                        countdownElement.remove(); // Remove the countdown display
+                    }
+                    startTheGamePong(); // Function to initialize or start the game
+                }
+                if (data.action === 'update_player_position_pong') {
+
+                    if (data.player === 'player2') {
+                        player2.y = data.position_y;
+                    }
+                }
+                if(data.action === 'client_key_event') {
+                    if (data.key === 'up') {
+                        player2.velocityY = -5;
+                    } else if (data.key === 'down') {
+                        player2.velocityY = 5;
+                    } else if (data.key === 'stop') {
+                        player2.velocityY = 0;
+                    }
+				}
+				if (data.type === 'player_left') {
+					console.log('Player left the game');
+				}
             }
-            // Handle countdown message
-            if (data.action === 'game_countdown_pong')
-            updateCountdownDisplay(data.message);
-        if (data.action === 'start_game_pong') {
-            let countdownElement = document.getElementById('countdown');
-            if (countdownElement) {
-                countdownElement.remove(); // Remove the countdown display
-            }
-            startTheGamePong(); // Function to initialize or start the game
-        }
-        if (data.action === 'update_player_position_pong') {
-            
-            if (data.player === 'player2') {
-                player2.y = data.position_y;
-            }
-        }
-        if(data.action === 'client_key_event') {
-            if (data.key === 'up') {
-                player2.velocityY = -5;
-            } else if (data.key === 'down') {
-                player2.velocityY = 5;
-            } else if (data.key === 'stop') {
-                player2.velocityY = 0;
-            }
-        }
-        if (data.type === 'player_left') {
-            console.log('Player left the game');
-        }
-        gameRoomSocket.onclose = function() {
+            gameRoomSocket.onclose = function() {
                 endGame(namePlayer[0]);
                 console.log("Game room connection closed.");
             };
-
-          }
-          socket.onerror = function(error) {
-              console.error('WebSocket error:', error);
-          };
+        }
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
     }
 }
 
@@ -449,19 +421,19 @@ let roomSocket = null;
 
 async function remoteClient() {
     let socket = new WebSocket(`wss://${window.location.host}/wss/socket-server/lobby/`);
-    
+
     socket.onopen = function(event) {
         // Request the list of active game rooms once the WebSocket connection is open
         socket.send(JSON.stringify({ action: 'list_rooms_pong' }));
     };
-    
+
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
         if (data.action === 'list_rooms_pong') {
             const games = data.rooms; // Array of active game rooms
             var gameList = document.getElementById('content');
             gameList.innerHTML = ''; // Clear previous content
-            
+
             if (games.length > 0) {
                 // Dynamically create buttons for each active game
                 games.forEach((game) => {
@@ -474,12 +446,12 @@ async function remoteClient() {
                     gameList.appendChild(button);
                 });
             } else
-            gameList.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">No active games</p>';
+                gameList.innerHTML = '<p style="display: flex; text-align: center; justify-content:center; font-size: 3em;">No active games</p>';
         } else if (data.action === 'joined_room_pong')
-        console.log('Joined room:', data.room_id);
+            console.log('Joined room:', data.room_id);
         
     };
-    
+
     function joinGameRoom(roomId) {
         socket.close(); // Close the WebSocket connection to the lobby
         // Open a new WebSocket connection for the selected room
@@ -516,35 +488,36 @@ async function remoteClient() {
             if (data.action === 'game_ended_pong') {
                 endGame(data.winner);
                 console.log("game ended");
-        }
-        if (data.action === 'update_player_position') {
-            if (data.player === 'player1') {
-                player1.y = data.position_y;
-            } 
-        }
-        if(data.action === 'host_key_event') {
-            if (data.key === 'up') {
-                player1.velocityY = -5;
-            } else if (data.key === 'down') {
-                player1.velocityY = 5;
-            } else if (data.key === 'stop') {
-                player1.velocityY = 0;
             }
-        }
-        if (data.action === 'get_host_player') {
-            namePlayer[0] = data.name;
-        }
-        if (data.type === 'player_left') {
+            if (data.action === 'update_player_position') {
+                if (data.player === 'player1') {
+                    player1.y = data.position_y;
+                } 
+            }
+            if(data.action === 'host_key_event') {
+               if (data.key === 'up') {
+                   player1.velocityY = -5;
+               } else if (data.key === 'down') {
+                   player1.velocityY = 5;
+               } else if (data.key === 'stop') {
+                   player1.velocityY = 0;
+               }
+            }
+            if (data.action === 'get_host_player') {
+                namePlayer[0] = data.name;
+            }
+			if (data.type === 'player_left') {
 				console.log('Player left the game');
 			}
-         if (data.type === 'notify_winner') {
+            if (data.type === 'notify_winner') {
                 console.log('The winner is:', data.winner);
             }
             roomSocket.onclose = function() {
                 endGame(namePlayer[1]);
                 console.log("Game room connection closed.");
             };
-         };
+ 
+        };
     }
 }
 
@@ -567,6 +540,7 @@ function updateCountdownDisplay(message) {
     }
     countdownElement.textContent = `Game starts in: ${message}`;
 }
+
 
 // BELOW IS THE GAME'S DYNAMICS
 
@@ -650,11 +624,11 @@ function initVariables() {
     ball.velocityX = Math.cos(generateRandomAngle()) * boardWidth / 200 * velocity;
     ball.velocityY = Math.sin(generateRandomAngle()) * boardHeight / 100 * generateRandomNumber() * velocity;
     if (boardHeight >= boardWidth / 1.618)
-    boardHeight = boardWidth / 1.618;
-playerHeight = boardHeight / 5;
-ball.radius = playerHeight / ballRadiusFactor;
-player1.height = playerHeight;
-player2.height = playerHeight;    
+        boardHeight = boardWidth / 1.618;
+    playerHeight = boardHeight / 5;
+    ball.radius = playerHeight / ballRadiusFactor;
+    player1.height = playerHeight;
+    player2.height = playerHeight;    
 }
 
 let firstPlayer = 0;
@@ -663,17 +637,18 @@ let secondPlayer = 1;
 function launchGamePong() {
     console.log('Game is starting...');
     initVariables();
+
     var mainElement = document.getElementById('content');
     if (isHost && remote === true) 
-    namePlayer[0] = "{{ user.display_name }}";
-else if (remote === true)
-namePlayer[1] = "{{ user.display_name }}";
-mainElement.innerHTML = '<div id="board-container" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; overflow:hidden">' +
+        namePlayer[0] = "{{ user.display_name }}";
+    else if (remote === true)
+        namePlayer[1] = "{{ user.display_name }}";
+    mainElement.innerHTML = '<div id="board-container" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; overflow:hidden">' +
     '<p class="name_player">' + namePlayer[firstPlayer] + '</p>' +
     '<canvas id="board" width="' + boardWidth + '" height="' + boardHeight + '"></canvas>' +
     '<p class="name_player">' + namePlayer[secondPlayer] + '</p>' +
     '</div>';
-    
+
     document.body.style.overflow = 'padding-bottom : 5em';
     board = document.getElementById('board');
     board.width = boardWidth;
@@ -687,6 +662,8 @@ mainElement.innerHTML = '<div id="board-container" style="display: flex; justify
     player1.name = namePlayer[firstPlayer];
     player2.name = namePlayer[secondPlayer];
     
+    console.log("player1 name is ", player1.name);
+    console.log("player2 name is ", player2.name);
     //set ball
     ball.x = board.width / 2;
     ball.y = board.height / 2;
@@ -713,8 +690,8 @@ function handleResize() {
     //boardHeight = window.innerHeight / 1.618;
     boardWidth = 600;
     boardHeight = 400;
-    //    if (boardHeight >= boardWidth / 1.618)
-    //        boardHeight = boardWidth / 1.618;
+//    if (boardHeight >= boardWidth / 1.618)
+//        boardHeight = boardWidth / 1.618;
     board.width = boardWidth;
     board.height = boardHeight;
     playerHeight = boardHeight / 5;
@@ -856,7 +833,7 @@ function detectCollision(a, b) {
 function movePlayer() {
     let newVelocity = 5;
     let positionUpdated = false;
-    
+
     // Player 1 controls
     if (remote === true)
     {
@@ -907,20 +884,20 @@ function movePlayer() {
     else if (local === true)
     {
         if (keysPressed["KeyW"]) {
-            player1.velocityY = -newVelocity;
+        player1.velocityY = -newVelocity;
         } else if (keysPressed["KeyS"]) {
             player1.velocityY = newVelocity;
         } else {
             player1.velocityY = 0; // Stop movement if no key is pressed
         }
-        // Player 2 controls
+    // Player 2 controls
         if (keysPressed["ArrowUp"])
-        player2.velocityY = -newVelocity;
-    else if (keysPressed["ArrowDown"])
-    player2.velocityY = newVelocity;
-else
-player2.velocityY = 0; // Stop movement if no key is pressed
-}
+            player2.velocityY = -newVelocity;
+        else if (keysPressed["ArrowDown"])
+            player2.velocityY = newVelocity;
+        else
+            player2.velocityY = 0; // Stop movement if no key is pressed
+        }
 } 
 
 function generateRandomAngle() {
@@ -928,17 +905,17 @@ function generateRandomAngle() {
     var maxAngle = 150 * Math.PI / 180; // Convert degrees to radians
     var randomAngle = Math.random() * (maxAngle - minAngle) + minAngle;
     if (randomAngle > 1.2 && randomAngle < 1.8)
-    randomAngle += 1;
-return randomAngle;
+        randomAngle += 1;
+    return randomAngle;
 } 
 
 function generateRandomNumber() {
     var random = Math.random();
     if (random > 0.5)
-    random = 1;
-else
-random = -1;
-return random;
+        random = 1;
+    else
+        random = -1;
+    return random;
 }
 
 function resetGame(direction)
@@ -951,15 +928,15 @@ function resetGame(direction)
     ball.velocityY = Math.sin(generateRandomAngle()) * board.height / 100 * generateRandomNumber() * velocity;
 }
 
-function updateGameResultPong(winner, namePlayerPlaying, scoreToDo, scoreWinner, scoreLoser, tournament, tournament_id)
-{
+function endGame(winner) {
+    gameEnded = true;
+    console.log(winner + " won !");
     fetch('/update_game_result_pong/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
         },
-        body: JSON.stringify({ winner: winner, players : namePlayerPlaying, scoreToDo: scoreToDo, scoreW: scoreWinner, scoreL: scoreLoser, is_tournament: tournament, tournament_id: tournament_id }),
+        body: JSON.stringify({ winner: winner }),
     })
     .then(response => {
         if (response.ok) {
@@ -971,87 +948,15 @@ function updateGameResultPong(winner, namePlayerPlaying, scoreToDo, scoreWinner,
     .catch(error => {
         console.error('Error updating game result:', error);
     });
-}
-
-function updateEndTournamentPong(tournament_id, winner)
-{
-    fetch('/update_end_tournament/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({tournament_id: tournament_id, winner: winner}),
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log('Tournament ended successfully');
-        } else {
-            console.error('Failed to end tournament');
-        }
-    })
-    .catch(error => {
-        console.error('Error starting tournament:', error);
-    });
-}
-
-function updateStartTournamentPong(namePlayer)
-{
-    fetch('/update_start_tournament/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({ players : namePlayer, pong_tournament: true, memory_tournament: false}),
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log('Tournament started successfully');
-            return response.json();
-        } else {
-            throw new Error('Failed to start tournament');
-        }
-    })
-    .then(data => {
-        // Access tournament_id from the data
-        console.log('Tournament ID:', data.tournament_id);
-        tournament_id = data.tournament_id;
-    })
-    .catch(error => {
-        console.error('Error starting tournament:', error);
-    });
-}
-
-function endGame(winner) {
-    gameEnded = true;
-    console.log(winner + " won !");
-    let scoreWinner = player1Score > player2Score ? player1Score : player2Score;
-    let scoreLoser = player1Score < player2Score ? player1Score : player2Score;
-    let namePlayerPlaying = [player1.name, player2.name];
-    updateGameResultPong(winner, namePlayerPlaying, scoreToDo, scoreWinner, scoreLoser, tournament, tournament_id);
     var mainElement = document.getElementById('content');
     mainElement.innerHTML = '';
-    let getUserDisplay = "{{ user.display_name }}";
-    if (winner === getUserDisplay)
-    {
-        mainElement.innerHTML = '<div id="endGame" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Well done ! </p>' +
-            '<p style="text-align: center; font-size:2em;"> You won ! <br>' + 
-            '<iframe src="https://giphy.com/embed/OScDfyJIQaXe" width="480" height="480" frameborder="0" class="giphy-embed" allowfullscreen></iframe>' +
-            '<p><a href="https://giphy.com/gifs/rabbids-dance-cute-OScDfyJIQaXe"></a></p>' +
-            '</div>';
-    }
-    else
-    {
-        mainElement.innerHTML = '<div id="endGame" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Game Over ! </p>' +
-            '<p style="text-align: center; font-size:2em;">' + winner + ' won ! <br>' + 
-            '<iframe src="https://giphy.com/embed/OScDfyJIQaXe" width="480" height="480" frameborder="0" class="giphy-embed" allowfullscreen></iframe>' +
-            '<p><a href="https://giphy.com/gifs/rabbids-dance-cute-OScDfyJIQaXe"></a></p>' +
-            '</div>';
-    }
-    if (tournament === false && local === true)
+    mainElement.innerHTML = '<div id="endGame" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
+		'<p style="text-align: center; font-size:4em;">Game Over ! </p>' +
+		'<p style="text-align: center; font-size:2em;">' + winner + ' won ! <br>' + //<br> If you want to play again with the same settings, press the button below.</p>' +
+		'<iframe src="https://giphy.com/embed/OScDfyJIQaXe" width="480" height="480" frameborder="0" class="giphy-embed" allowfullscreen></iframe>' +
+		'<p><a href="https://giphy.com/gifs/rabbids-dance-cute-OScDfyJIQaXe"></a></p>' +
+		'</div>';
+    if (tournament === false)
     {
         var startAgain = document.createElement("button");
         startAgain.textContent = "Start again";
@@ -1063,41 +968,43 @@ function endGame(winner) {
             launchGamePong();
         });
     }
-    else {
+    else
+    {
         if (winner === namePlayer[firstPlayer])
             namePlayer.splice(secondPlayer, 1);
         else
             namePlayer.splice(firstPlayer, 1);
     }
-    if (tournament === true && firstPlayer < namePlayer.length - 1) {
+    if (tournament === true && firstPlayer < namePlayer.length - 1)
+    {
         firstPlayer++;
         secondPlayer++;
         mainElement.innerHTML += '<div id="nextRound" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Next Round ! </p>' +
-            '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
-            '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
-            '</div>';
-            document.getElementById('startNextRound').addEventListener("click", function() {
-                player1Score = 0;
-                player2Score = 0;
-                launchGamePong();
-            });
-        }
+        '<p style="text-align: center; font-size:4em;">Next Round ! </p>' +
+        '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
+        '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
+        '</div>';
+        document.getElementById('startNextRound').addEventListener("click", function() {
+            player1Score = 0;
+            player2Score = 0;
+            launchGamePong();
+        });
+    }
     else if (tournament === true && namePlayer.length > 2 && namePlayer.length === (numberPlayers / 2))
     {
         firstPlayer = 0;
         secondPlayer = 1;
         mainElement.innerHTML += '<div id="SecondRound" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Second Round ! </p>';
-            
-    for (let i = 0; i < namePlayer.length - 1; i++) {
-        var matchParagraph = document.createElement("p");
-        matchParagraph.style.textAlign = "center";
-        matchParagraph.textContent = namePlayer[i] + ' against ' + namePlayer[i+1];
-        mainElement.appendChild(matchParagraph);
-        i++;
-    }
-    mainElement.innerHTML += '<div id="nextRound" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
+                                    '<p style="text-align: center; font-size:4em;">Second Round ! </p>';
+
+        for (let i = 0; i < namePlayer.length - 1; i++) {
+            var matchParagraph = document.createElement("p");
+            matchParagraph.style.textAlign = "center";
+            matchParagraph.textContent = namePlayer[i] + ' against ' + namePlayer[i+1];
+            mainElement.appendChild(matchParagraph);
+            i++;
+        }
+        mainElement.innerHTML += '<div id="nextRound" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
         '<p style="text-align: center; font-size:4em;">Next Round ! </p>' +
         '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
         '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
@@ -1113,8 +1020,8 @@ function endGame(winner) {
         firstPlayer = 0;
         secondPlayer = 1;
         mainElement.innerHTML += '<div id="ThirdRound" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Third Round ! </p>';
-            
+                                    '<p style="text-align: center; font-size:4em;">Third Round ! </p>';
+
         for (let i = 0; i < namePlayer.length - 1; i++) {
             var matchParagraph = document.createElement("p");
             matchParagraph.style.textAlign = "center";
@@ -1123,44 +1030,53 @@ function endGame(winner) {
             i++;
         }
         mainElement.innerHTML += '<div id="nextRound" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Next Round ! </p>' +
-            '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
-            '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
-            '</div>';
-            document.getElementById('startNextRound').addEventListener("click", function() {
-                player1Score = 0;
-                player2Score = 0;
-                launchGamePong();
-            });
+        '<p style="text-align: center; font-size:4em;">Next Round ! </p>' +
+        '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
+        '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
+        '</div>';
+        document.getElementById('startNextRound').addEventListener("click", function() {
+            player1Score = 0;
+            player2Score = 0;
+            launchGamePong();
+        });
     }
     else if (tournament === true && namePlayer.length === 2 ) {
         firstPlayer = 0;
         secondPlayer = 1;
         mainElement.innerHTML += '<div id="Finale" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">Final! </p>' +
-            '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
-            '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
-            '</div>';
-            document.getElementById('startNextRound').addEventListener("click", function() {
-                player1Score = 0;
-                player2Score = 0;
-                launchGamePong();
-            });
+                                    '<p style="text-align: center; font-size:4em;">Final! </p>' +
+                                    '<p style="text-align: center; font-size:2em;">' + namePlayer[firstPlayer] + ' against ' + namePlayer[secondPlayer] + '</p>' +
+                                    '<button id="startNextRound" class="styled-button">Start Next Round</button>' +
+                                    '</div>';
+        document.getElementById('startNextRound').addEventListener("click", function() {
+            player1Score = 0;
+            player2Score = 0;
+            launchGamePong();
+        });
     }
     else if (tournament === true && namePlayer.length === 1) {
         console.log("end of the tournament");
-        console.log("tournament_id: " + tournament_id);
-        updateEndTournamentPong(tournament_id, winner);
         mainElement.innerHTML += '<div id="endTournament" style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; overflow: hidden;">' +
-            '<p style="text-align: center; font-size:4em;">End of the Tournament ! </p>' +
-            '<p style="text-align: center; font-size:2em;">' + winner + ' won the tournament !</p>' +
-            '</div>';
-        winner = '';
-        tournament = false;
-        tournament_id = 0;
+        '<p style="text-align: center; font-size:4em;">End of the Tournament ! </p>' +
+        '<p style="text-align: center; font-size:2em;">' + winner + ' won the tournament !</p>' +
+        '</div>';
     }
 }
-                
+
 </script>
 
+<div class="button d-flex justify-content-center align-items-center">
+	<a href="#" onclick="showGamePong()" class="btn btn-primary">Pong</a> 
+    <!-- <a href="#" onclick="showGameMemory()" class="btn btn-primary" style="margin-left: 1em;">Memory</a> -->
+</div> 
+
+
+{% else %}
+<li class="nav-item">
+	<a class="nav-link" href="signIn">Sign In</a>
+</li>
+<li class="nav-item">
+	<a class="nav-link" href="signUp">Sign Up</a>
+</li>
+{% endif %}
 {% endblock %}
