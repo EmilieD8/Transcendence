@@ -1,7 +1,9 @@
 # In your app's views.py file
-
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model, login, logout, authenticate
+from django.contrib.auth.hashers import make_password, check_password, is_password_usable
 from django.core.files.storage import FileSystemStorage
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -23,6 +25,7 @@ from django.utils import timezone
 from itertools import groupby
 
 
+@csrf_exempt
 def signUp(request):
     User = get_user_model()
 
@@ -35,8 +38,13 @@ def signUp(request):
         email = request.POST.get('email', '')
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
-        if password1 != password2:
+        if password1 != password2 or password1 == '' or password2 == '':
             messages.error(request, 'Passwords do not match')
+            return render(request=request, template_name="signUp.html", context={})
+        try:
+            validate_password(password1)
+        except ValidationError as e:
+            messages.error(request, e.messages)
             return render(request=request, template_name="signUp.html", context={})
         try:
             user = User.objects.create_user(username=username, email=email, password=password1, display_name=display_name)
@@ -50,8 +58,43 @@ def signUp(request):
             messages.error(request, 'Failed to create user: User or Email already exists')
             return render(request=request, template_name="signUp.html", context={})
     return render(request=request, template_name="signUp.html", context={})
+# def signUp(request):
+#     User = get_user_model()
+#     ph = PasswordHasher()
+
+#     if request.user.is_authenticated:
+#         return render(request=request, template_name="home.html")
+
+#     if request.method == 'POST':
+#         username = request.POST.get('username', '')
+#         display_name = request.POST.get('username', '')
+#         email = request.POST.get('email', '')
+#         password1 = request.POST.get('password1', '')
+#         password2 = request.POST.get('password2', '')
+#         if password1 != password2 or password1 == '' or password2 == '':
+#             messages.error(request, 'Passwords do not match')
+#             return render(request=request, template_name="signUp.html", context={})
+#         try:
+#             validate_password(password1)
+#         except ValidationError as e:
+#             messages.error(request, e.messages)
+#             return render(request=request, template_name="signUp.html", context={})
+#         try:
+#             hashed_password = ph.hash(password1)
+#             user = User.objects.create_user(username=username, email=email, password=hashed_password, display_name=display_name)
+#             user = authenticate(username=username, password=password1)
+#             if user is not None:
+#                 login(request, user)
+#                 request.user.online = True
+#                 request.user.save()
+#             return redirect("/")
+#         except Exception:
+#             messages.error(request, 'Failed to create user: User or Email already exists')
+#             return render(request=request, template_name="signUp.html", context={})
+#     return render(request=request, template_name="signUp.html", context={})
 
 
+@csrf_exempt
 def signIn(request):
     # User = get_user_model()
     if request.method == 'POST':
@@ -291,6 +334,7 @@ def start_tournament_memory(request):
         return JsonResponse({'error': 'Unsupported method'}, status=405)
 
 
+@csrf_exempt
 def get_user_statistics(request):
     if request.user.is_authenticated:
         # Fetch the user's statistics from the database
@@ -303,6 +347,7 @@ def get_user_statistics(request):
         return JsonResponse({'error': 'User is not authenticated'}, status=401)
 
 
+@csrf_exempt
 def signOut(request):
     if request.user.is_authenticated:
         request.user.online = False
@@ -316,6 +361,7 @@ def signOut(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def editProfile(request):
     User = get_user_model()
     if request.user.is_authenticated:
@@ -341,6 +387,7 @@ def editProfile(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def showProfile(request):
     User = get_user_model()
     if request.user.is_authenticated:
@@ -352,6 +399,7 @@ def showProfile(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def add_users(request):
     User = get_user_model()
     fake = Faker()
@@ -380,6 +428,7 @@ def add_users(request):
                     User.objects.create_user(**user_data)
 
 
+@csrf_exempt
 def showHome(request):
     if request.user.is_authenticated:
         return render(request=request, template_name="home.html", context={})
@@ -388,10 +437,12 @@ def showHome(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def showChat(request):
     return render(request, 'chat.html')
 
 
+@csrf_exempt
 def scoreboard(request):
     User = get_user_model()
     if request.user.is_authenticated:
@@ -445,6 +496,7 @@ def get_display_name(request):
         return JsonResponse({'display_name': display_name})
 
 
+@csrf_exempt
 def home(request):
     # Retrieve the top three users based on games won
     # top_three_users = User.objects.order_by('-pong_games_won')[:3]
@@ -455,6 +507,7 @@ def home(request):
     return render(request, 'home.html', context)
 
 
+@csrf_exempt
 def gamePong(request):
     # User = get_user_model()
     if request.user.is_authenticated:
@@ -464,6 +517,7 @@ def gamePong(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def callback(request):
     User = get_user_model()
 
@@ -488,7 +542,8 @@ def callback(request):
             print(user_info)
 
             username = user_info['login']
-            password1 = user_info['login']
+            # password1 = user_info['login']
+            password1 = User.objects.make_random_password(length=20)
             email = user_info['email']
             avatar_url = user_info['image']['link']
             surename = user_info['last_name']
@@ -523,6 +578,7 @@ def callback(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def changeAvatar(request):
     User = get_user_model()
     if request.user.is_authenticated:
@@ -566,6 +622,7 @@ def changeAvatar(request):
         return render(request=request, template_name="signIn.html", context={})
 
 
+@csrf_exempt
 def searchUsers(request):
     User = get_user_model()
     if request.user.is_authenticated:
@@ -584,6 +641,7 @@ def searchUsers(request):
 
 
 @login_required
+@csrf_exempt
 def addFriend(request):
     User = get_user_model()
     if request.method == 'POST':
@@ -614,6 +672,7 @@ def addFriend(request):
         return JsonResponse({"error": "Invalid request method."}, status=405)
 
 
+@csrf_exempt
 def showFriends(request):
     User = get_user_model()
     if request.user.is_authenticated:
@@ -626,6 +685,7 @@ def showFriends(request):
 
 
 @login_required
+@csrf_exempt
 def removeFriends(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -640,6 +700,7 @@ def removeFriends(request):
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
+@csrf_exempt
 def gameMemory(request):
     if request.user.is_authenticated:
         return render(request, 'gameMemory.html', context={})
