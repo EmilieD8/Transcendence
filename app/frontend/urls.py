@@ -31,6 +31,7 @@ urlpatterns = [
     path('update_game_result_memory/', views.update_game_result_memory, name='update_game_result_memory'),
     path('get_display_name/', views.get_display_name, name='get_display_name'),
     path('update_end_tournament/', views.end_tournament, name='update_end_tournament'),
+    path('get_user_statistics/', views.get_user_statistics, name='get_user_statistics'),
 ]
 
 
