@@ -3,11 +3,11 @@ name: Docker Build Test
 on:
   push:
     branches:
-      - mariia
+      - mariia_monitor_check
       - main
   pull_request:
     branches:
-      - mariia
+      - mariia_monitor_check
       - main
 
 #job on building container and testing whether we can reach end points
