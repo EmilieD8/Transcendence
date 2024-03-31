@@ -34,7 +34,9 @@ jobs:
           sudo apt-get install -y docker-compose
 
       - name: Build and Run Containers
-        run: make all
+        run: |
+          make prepare
+          make all
 
       - name: Check Docker Containers Status
         run: |
